@@ -106,7 +106,7 @@ impl Clustering {
     fn select_in(&self, ids: &PyList) -> PyResult<ClusteringSubset> {
         let ids: Vec<u64> = ids.extract()?;
         let data = ClusteringSubset {
-            data: ClusteringHandle { graph: self.data.graph.clone(), clustering: self.data.clone(), cluster_ids: ids.into_iter().collect() },
+            data: ClusteringHandle::new(self.data.clone(), ids.into_iter().collect()),
         };
         Ok(data)
     }
@@ -131,11 +131,7 @@ impl Clustering {
                 .copied()
                 .collect();
             Ok(ClusteringSubset {
-                data: ClusteringHandle {
-                    graph: self.data.graph.clone(),
-                    clustering: self.data.clone(),
-                    cluster_ids: v,
-                },
+                data: ClusteringHandle::new(self.data.clone(), v),
             })
         }
     }
@@ -232,4 +228,51 @@ impl ClusteringSubset {
         let (diff, dist) = self.data.size_diff(rhs.data.as_ref());
         (diff, SummarizedDistributionWrapper::new(dist))
     }
+
+    #[getter]
+    fn cluster_sizes(&self) -> Vec<u32> {
+        let d = &self.data;
+        d.cluster_ids
+            .iter()
+            .map(|k| d.clustering.clusters.get(k).unwrap().nodes.len() as u32)
+            .collect()
+    }
+
+    #[getter]
+    fn num_singletons(&self) -> u32 {
+        let d = &self.data;
+        let num_nonsingletons = d.covered_nodes.len() as u32;
+        let total_n = self.data.graph.graph.n() as u32;
+        total_n - num_nonsingletons
+    }
+
+    #[getter]
+    fn node_multiplicities(&self) -> Vec<u32> {
+        self.data.node_multiplicity.clone()
+    }
+
+    #[getter]
+    fn node_multiplicities_dist(&self) -> SummarizedDistributionWrapper {
+        SummarizedDistributionWrapper::new(self.data.node_multiplicity.iter().map(|it| *it as f64).collect())
+    }
+
+    #[getter]
+    fn cluster_sizes_with_singleton(&self) -> Vec<u32> {
+        self.cluster_sizes().into_iter().chain((0..self.num_singletons()).map(|_| 1)).collect()
+    }
+
+    // #[getter]
+    // fn num_clusters_per_node(&self) -> f64 {
+    //     let clus = &self.data.clustering;
+    //     let total_nodes_covered = self.data.cluster_ids.iter().map(|it| clus.clusters.get(it).unwrap().nodes.len() as u32).sum::<u32>();
+    //     let total_clusters = self.data.cluster_ids.len() as u32;
+    //     total_clusters as f64 / total_nodes_covered as f64
+    // }
+
+    // #[getter]
+    // fn num_clusters_per_node_with_singletons(&self) -> f64 {
+    //     let total_clusters = self.data.cluster_ids.len() as u32 + self.num_singletons();
+    //     let n = self.data.graph.graph.n() as u32;
+    //     total_clusters as f64 / n as f64
+    // }
 }
