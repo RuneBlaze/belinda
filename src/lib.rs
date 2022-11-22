@@ -1,5 +1,5 @@
 mod exposure;
-use exposure::{ClusterSkeleton, Clustering, Graph, set_nthreads, SummarizedDistributionWrapper};
+use exposure::{set_nthreads, ClusterSkeleton, Clustering, Graph, SummarizedDistributionWrapper};
 use pyo3::prelude::*;
 
 /// A Python module implemented in Rust.

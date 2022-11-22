@@ -1,8 +1,18 @@
-use aocluster::{belinda::{
-    ClusteringHandle, EnrichedGraph, GraphStats, RichCluster, RichClustering, ClusteringSource,
-}, aoc::rayon};
-use pyo3::{prelude::*, types::{PyDict, PyList}};
-use std::{collections::HashMap, sync::{Arc, Mutex}, borrow::BorrowMut};
+use aocluster::{
+    aoc::rayon,
+    belinda::{
+        ClusteringHandle, ClusteringSource, EnrichedGraph, GraphStats, RichCluster, RichClustering,
+    },
+};
+use pyo3::{
+    prelude::*,
+    types::{PyDict, PyList},
+};
+use std::{
+    borrow::BorrowMut,
+    collections::HashMap,
+    sync::{Arc, Mutex},
+};
 
 #[pyfunction]
 pub fn set_nthreads(nthreads: usize) {
@@ -80,10 +90,13 @@ pub struct ClusteringSubset {
 #[pymethods]
 impl Clustering {
     #[new]
-    #[args(
-        py_kwargs = "**"
-    )]
-    fn new(py: Python, graph: &Graph, filepath: &str, py_kwargs: Option<&PyDict>) -> PyResult<Self> {
+    #[args(py_kwargs = "**")]
+    fn new(
+        py: Python,
+        graph: &Graph,
+        filepath: &str,
+        py_kwargs: Option<&PyDict>,
+    ) -> PyResult<Self> {
         let mut source = ClusteringSource::Unknown;
         if let Some(kwargs) = py_kwargs {
             if let Some(cpm_resolution) = kwargs.get_item("cpm") {
@@ -253,12 +266,21 @@ impl ClusteringSubset {
 
     #[getter]
     fn node_multiplicities_dist(&self) -> SummarizedDistributionWrapper {
-        SummarizedDistributionWrapper::new(self.data.node_multiplicity.iter().map(|it| *it as f64).collect())
+        SummarizedDistributionWrapper::new(
+            self.data
+                .node_multiplicity
+                .iter()
+                .map(|it| *it as f64)
+                .collect(),
+        )
     }
 
     #[getter]
     fn cluster_sizes_with_singleton(&self) -> Vec<u32> {
-        self.cluster_sizes().into_iter().chain((0..self.num_singletons()).map(|_| 1)).collect()
+        self.cluster_sizes()
+            .into_iter()
+            .chain((0..self.num_singletons()).map(|_| 1))
+            .collect()
     }
 
     // #[getter]
