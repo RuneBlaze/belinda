@@ -104,10 +104,10 @@ impl Clustering {
             }
         }
         let raw_data = py.allow_threads(move || {
-            let mut clus = RichClustering::<true>::pack_from_clustering(
+            let mut clus = RichClustering::<true>::pack_from_file(
                 graph.data.clone(),
-                aocluster::Clustering::parse_from_file(&graph.data.graph, filepath, false).unwrap(),
-            );
+                filepath,
+            ).unwrap();
             clus.source = source;
             clus
         });
@@ -230,6 +230,15 @@ impl ClusteringSubset {
             let stats = self.data.stats();
             StatsWrapper::from_graph_stats(stats)
         })
+    }
+
+    fn __getitem__(&self, key: u64) -> PyResult<ClusterSkeleton> {
+        let clus = &self.data.clustering;
+        if let Some(cluster) = clus.clusters.get(&key) {
+            Ok(ClusterSkeleton::from_cluster(cluster))
+        } else {
+            Err(PyErr::new::<pyo3::exceptions::PyKeyError, _>("Cluster not found"))
+        }
     }
 
     #[getter]
