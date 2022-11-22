@@ -270,6 +270,14 @@ impl ClusteringSubset {
 
     #[getter]
     fn node_multiplicities(&self) -> Vec<u32> {
+        let raw_mult = &self.data.node_multiplicity;
+        self.data.covered_nodes.iter().map(|n| {
+            raw_mult[n as usize]
+        }).collect()
+    }
+
+    #[getter]
+    fn node_multiplicities_with_singletons(&self) -> Vec<u32> {
         self.data.node_multiplicity.clone()
     }
 
