@@ -283,6 +283,18 @@ impl ClusteringSubset {
 
     #[getter]
     fn node_multiplicities_dist(&self) -> SummarizedDistributionWrapper {
+        let raw_mult = &self.data.node_multiplicity;
+        SummarizedDistributionWrapper::new(
+            self.data.covered_nodes.iter().map(|n| {
+                raw_mult[n as usize]
+            })
+            .map(|it| it as f64)
+            .collect(),
+        )
+    }
+
+    #[getter]
+    fn node_multiplicities_with_singletons_dist(&self) -> SummarizedDistributionWrapper {
         SummarizedDistributionWrapper::new(
             self.data
                 .node_multiplicity
