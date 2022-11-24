@@ -1,4 +1,5 @@
 mod exposure;
+mod ffi;
 use exposure::{set_nthreads, ClusterSkeleton, Clustering, Graph, SummarizedDistributionWrapper};
 use pyo3::prelude::*;
 

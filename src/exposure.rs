@@ -346,8 +346,8 @@ impl ClusteringSubset {
 
     fn __str__(&self) -> PyResult<String> {
         Ok(format!(
-            "ClusteringSubset(size={}, node_coverage={:.1}%)",
-            self.data.cluster_ids.len(), self.node_coverage() * 100.0 
+            "ClusteringSubset(size={}, node_coverage={:.1}%, is_overlapping={})",
+            self.data.cluster_ids.len(), self.node_coverage() * 100.0, self.data.is_overlapping
         ))
     }
 }
