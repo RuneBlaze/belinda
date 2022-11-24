@@ -42,7 +42,7 @@ checksum = "216261ddc8289130e551ddcd5ce8a064710c0d064a4d2895c67151c92b5443f6"
 [[package]]
 name = "aocluster"
 version = "0.0.1"
-source = "git+https://github.com/illinois-or-research-analytics/aocv2_rs#99c5a007d259f37af855f549e2332f6ba62e3360"
+source = "git+https://github.com/illinois-or-research-analytics/aocv2_rs#54903d451a8e5b7b04a7fb8eb77e41eb08e4cdbc"
 dependencies = [
  "ahash",
  "anyhow",
@@ -56,6 +56,7 @@ dependencies = [
  "lz4",
  "nom",
  "num_cpus",
+ "once_cell",
  "ordered-float",
  "priority-queue",
  "probabilistic-collections",

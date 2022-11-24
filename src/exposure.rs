@@ -37,6 +37,24 @@ impl Graph {
             data: Arc::new(raw_data),
         }
     }
+
+    #[getter]
+    fn n(&self) -> u32 {
+        self.data.graph.n() as u32
+    }
+
+    #[getter]
+    fn m(&self) -> u64 {
+        self.data.graph.m() as u64
+    }
+
+    fn __str__(&self) -> PyResult<String> {
+        Ok(format!(
+            "Graph(n={}, m ={})",
+            self.data.graph.n(),
+            self.data.graph.m()
+        ))
+    }
 }
 
 #[pyclass]
@@ -51,6 +69,16 @@ pub struct ClusterSkeleton {
     mcd: u64,
     #[pyo3(get)]
     vol: u64,
+}
+
+#[pymethods]
+impl ClusterSkeleton {
+    pub fn __str__(&self) -> PyResult<String> {
+        Ok(format!(
+            "ClusterSkeleton(n={}, m={}, c={})",
+            self.n, self.m, self.c,
+        ))
+    }
 }
 
 impl From<RichCluster> for ClusterSkeleton {
@@ -104,10 +132,8 @@ impl Clustering {
             }
         }
         let raw_data = py.allow_threads(move || {
-            let mut clus = RichClustering::<true>::pack_from_file(
-                graph.data.clone(),
-                filepath,
-            ).unwrap();
+            let mut clus =
+                RichClustering::<true>::pack_from_file(graph.data.clone(), filepath).unwrap();
             clus.source = source;
             clus
         });
@@ -116,37 +142,56 @@ impl Clustering {
         })
     }
 
-    fn select_in(&self, ids: &PyList) -> PyResult<ClusteringSubset> {
-        let ids: Vec<u64> = ids.extract()?;
+    fn __getitem__(&self, ids: &PyList) -> PyResult<ClusteringSubset> {
+        let ids: Vec<u32> = ids.extract()?;
         let data = ClusteringSubset {
-            data: ClusteringHandle::new(self.data.clone(), ids.into_iter().collect()),
+            data: ClusteringHandle::new(self.data.clone(), ids.into_iter().collect(), false),
         };
         Ok(data)
     }
 
-    fn select(&self, f: &PyAny) -> PyResult<ClusteringSubset> {
-        if !f.is_callable() {
-            return Err(PyErr::new::<pyo3::exceptions::PyTypeError, _>(
-                "Expected a callable",
-            ));
-        } else {
-            let v = self
-                .data
-                .clusters
-                .iter()
-                .filter(|(_k, v)| {
-                    f.call((ClusterSkeleton::from_cluster(v),), None)
-                        .unwrap()
-                        .extract()
-                        .unwrap()
-                })
-                .map(|(k, v)| k)
-                .copied()
-                .collect();
-            Ok(ClusteringSubset {
-                data: ClusteringHandle::new(self.data.clone(), v),
+    fn filter(&self, f: &PyAny) -> PyResult<ClusteringSubset> {
+        let v = self
+            .data
+            .clusters
+            .iter()
+            .filter(|(_k, v)| {
+                f.call((ClusterSkeleton::from_cluster(v),), None)
+                    .unwrap()
+                    .extract()
+                    .unwrap()
             })
-        }
+            .map(|(k, v)| k)
+            .copied()
+            .collect();
+        let has_singletons = f
+            .call(
+                (ClusterSkeleton {
+                    n: 1,
+                    m: 0,
+                    c: 0,
+                    mcd: 0,
+                    vol: 0,
+                },),
+                None,
+            )
+            .unwrap()
+            .extract()
+            .unwrap();
+        Ok(ClusteringSubset {
+            data: ClusteringHandle::new(self.data.clone(), v, has_singletons),
+        })
+    }
+
+    pub fn __str__(&self) -> PyResult<String> {
+        Ok(format!(
+            "Clustering(covered_nodes={}, size={})",
+            self.data.cover.len(), self.data.clusters.len(),
+        ))
+    }
+
+    pub fn size(&self) -> usize {
+        self.data.clusters.len()
     }
 }
 
@@ -232,18 +277,23 @@ impl ClusteringSubset {
         })
     }
 
-    fn __getitem__(&self, key: u64) -> PyResult<ClusterSkeleton> {
+    fn __getitem__(&self, key: u32) -> PyResult<ClusterSkeleton> {
         let clus = &self.data.clustering;
         if let Some(cluster) = clus.clusters.get(&key) {
             Ok(ClusterSkeleton::from_cluster(cluster))
         } else {
-            Err(PyErr::new::<pyo3::exceptions::PyKeyError, _>("Cluster not found"))
+            Err(PyErr::new::<pyo3::exceptions::PyKeyError, _>(
+                "Cluster not found",
+            ))
         }
     }
 
-    #[getter]
-    fn keys(&self) -> Vec<u64> {
-        self.data.cluster_ids.iter().cloned().collect()
+    fn keys(&self) -> Vec<u32> {
+        self.data.cluster_ids.iter().collect()
+    }
+
+    fn size(&self) -> u64 {
+        self.data.cluster_ids.len()
     }
 
     fn compute_size_diff(&self, rhs: &Clustering) -> (u32, SummarizedDistributionWrapper) {
@@ -256,74 +306,48 @@ impl ClusteringSubset {
         let d = &self.data;
         d.cluster_ids
             .iter()
-            .map(|k| d.clustering.clusters.get(k).unwrap().nodes.len() as u32)
+            .map(|k| d.clustering.clusters.get(&k).unwrap().nodes.len() as u32)
             .collect()
+    }
+
+    #[getter]
+    fn node_coverage(&self) -> f64 {
+        self.data.get_covered_nodes() as f64 / self.data.graph.graph.n() as f64
     }
 
     #[getter]
     fn num_singletons(&self) -> u32 {
-        let d = &self.data;
-        let num_nonsingletons = d.covered_nodes.len() as u32;
-        let total_n = self.data.graph.graph.n() as u32;
-        total_n - num_nonsingletons
+        if self.data.has_singletons {
+            return self.data.clustering.singleton_clusters.len() as u32;
+        } else {
+            return 0;
+        }
     }
 
-    #[getter]
     fn node_multiplicities(&self) -> Vec<u32> {
         let raw_mult = &self.data.node_multiplicity;
-        self.data.covered_nodes.iter().map(|n| {
-            raw_mult[n as usize]
-        }).collect()
-    }
-
-    #[getter]
-    fn node_multiplicities_with_singletons(&self) -> Vec<u32> {
-        self.data.node_multiplicity.clone()
+        let mut mults : Vec<_> = self.data
+            .covered_nodes
+            .iter()
+            .map(|n| raw_mult[n as usize])
+            .collect();
+        if self.data.has_singletons {
+            mults.extend((0..self.num_singletons()).map(|_| 1));
+        }
+        mults
     }
 
     #[getter]
     fn node_multiplicities_dist(&self) -> SummarizedDistributionWrapper {
-        let raw_mult = &self.data.node_multiplicity;
         SummarizedDistributionWrapper::new(
-            self.data.covered_nodes.iter().map(|n| {
-                raw_mult[n as usize]
-            })
-            .map(|it| it as f64)
-            .collect(),
+            self.node_multiplicities().into_iter().map(|it| it as f64).collect(),
         )
     }
 
-    #[getter]
-    fn node_multiplicities_with_singletons_dist(&self) -> SummarizedDistributionWrapper {
-        SummarizedDistributionWrapper::new(
-            self.data
-                .node_multiplicity
-                .iter()
-                .map(|it| *it as f64)
-                .collect(),
-        )
+    fn __str__(&self) -> PyResult<String> {
+        Ok(format!(
+            "ClusteringSubset(size={}, node_coverage={:.1}%)",
+            self.data.cluster_ids.len(), self.node_coverage() * 100.0 
+        ))
     }
-
-    #[getter]
-    fn cluster_sizes_with_singleton(&self) -> Vec<u32> {
-        self.cluster_sizes()
-            .into_iter()
-            .chain((0..self.num_singletons()).map(|_| 1))
-            .collect()
-    }
-
-    // #[getter]
-    // fn num_clusters_per_node(&self) -> f64 {
-    //     let clus = &self.data.clustering;
-    //     let total_nodes_covered = self.data.cluster_ids.iter().map(|it| clus.clusters.get(it).unwrap().nodes.len() as u32).sum::<u32>();
-    //     let total_clusters = self.data.cluster_ids.len() as u32;
-    //     total_clusters as f64 / total_nodes_covered as f64
-    // }
-
-    // #[getter]
-    // fn num_clusters_per_node_with_singletons(&self) -> f64 {
-    //     let total_clusters = self.data.cluster_ids.len() as u32 + self.num_singletons();
-    //     let n = self.data.graph.graph.n() as u32;
-    //     total_clusters as f64 / n as f64
-    // }
 }
