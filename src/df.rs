@@ -70,6 +70,12 @@ impl TryFrom<EfficientSet> for RoaringBitmap {
     }
 }
 
+impl From<RoaringBitmap> for EfficientSet {
+    fn from(set: RoaringBitmap) -> Self {
+        EfficientSet::SmallSet(set)
+    }
+}
+
 impl TryFrom<EfficientSet> for RoaringTreemap {
     type Error = PolarsError;
 
@@ -80,6 +86,12 @@ impl TryFrom<EfficientSet> for RoaringTreemap {
             )),
             EfficientSet::BigSet(set) => Ok(set),
         }
+    }
+}
+
+impl From<RoaringTreemap> for EfficientSet {
+    fn from(set: RoaringTreemap) -> Self {
+        EfficientSet::BigSet(set)
     }
 }
 
@@ -162,12 +174,3 @@ pub(crate) fn iter_roaring(series: &Series) -> impl Iterator<Item = EfficientSet
         deserialize_set(&mut reader).unwrap()
     })
 }
-
-// pub(crate) fn iter_treemap(series: &Series) -> impl Iterator<Item = RoaringTreemap> + '_ {
-//     let chunks = series.binary().expect("series was not a list type");
-//     let iter = chunks.into_iter();
-//     iter.map(|row| {
-//         let value = row.expect("row is null");
-//         RoaringTreemap::deserialize_unchecked_from(value).unwrap()
-//     })
-// }

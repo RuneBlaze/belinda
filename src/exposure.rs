@@ -6,6 +6,7 @@ use aocluster::{
     utils::{calc_cpm_resolution, calc_modularity_resolution},
     DefaultGraph,
 };
+use itertools::Itertools;
 use polars::prelude::*;
 use polars::{df};
 
@@ -44,12 +45,12 @@ pub fn read_clusters(
 ) -> PyResult<PyObject> {
     let clus = Clustering::new(py, g, clus_path, None)?;
     let mut df = df!(
-        "label" => clus.data.clusters.keys().copied().collect::<Vec<_>>(),
-        "n" => clus.data.clusters.values().map(|v| v.n as u32).collect::<Vec<_>>(),
-        "m" => clus.data.clusters.values().map(|v| v.m).collect::<Vec<_>>(),
-        "c" => clus.data.clusters.values().map(|v| v.c).collect::<Vec<_>>(),
-        "mcd" => clus.data.clusters.values().map(|v| v.mcd).collect::<Vec<_>>(),
-        "nodes" => build_series_from_bitmap(clus.data.clusters.values().map(|v| v.nodes.clone()).collect::<Vec<_>>()),
+        "label" => clus.data.clusters.keys().copied().collect_vec(),
+        "n" => clus.data.clusters.values().map(|v| v.n as u32).collect_vec(),
+        "m" => clus.data.clusters.values().map(|v| v.m).collect_vec(),
+        "c" => clus.data.clusters.values().map(|v| v.c).collect_vec(),
+        "mcd" => clus.data.clusters.values().map(|v| v.mcd).collect_vec(),
+        "nodes" => build_series_from_bitmap(clus.data.clusters.values().map(|v| v.nodes.clone()).collect_vec()),
     ).unwrap();
     translate_df(&mut df)
 }
@@ -69,14 +70,14 @@ pub trait ClusDataFrame {
     fn can_overlap(&self, graph: &DefaultGraph) -> bool;
 }
 
-fn series_cpm(n: &Series, m: &Series, resolution: f64) -> anyhow::Result<Series> {
-    let n = n.u32()?;
-    let m = m.u64()?;
-    Ok(n.into_iter()
-        .zip(m.into_iter())
-        .map(|(n, m)| calc_cpm_resolution(m.unwrap() as usize, n.unwrap() as usize, resolution))
-        .collect())
-}
+// fn series_cpm(n: &Series, m: &Series, resolution: f64) -> anyhow::Result<Series> {
+//     let n = n.u32()?;
+//     let m = m.u64()?;
+//     Ok(n.into_iter()
+//         .zip(m.into_iter())
+//         .map(|(n, m)| calc_cpm_resolution(m.unwrap() as usize, n.unwrap() as usize, resolution))
+//         .collect())
+// }
 
 // #[pyfunction]
 // pub fn cpm(df: &PyAny, r: f64) -> PyResult<PyObject> {
@@ -468,11 +469,11 @@ fn edgeset(g: &EnrichedGraph, bm: &RoaringBitmap) -> RoaringTreemap {
     tm
 }
 
-pub fn rust_edgeset(series: &Series) -> Series {
-    iter_roaring(series)
-        .map(|bitmap| bitmap.len() as u32)
-        .collect()
-}
+// pub fn rust_edgeset(series: &Series) -> Series {
+//     iter_roaring(series)
+//         .map(|bitmap| bitmap.len() as u32)
+//         .collect()
+// }
 
 #[pyfunction(name = "popcnt")]
 pub fn py_popcnt(series: &PyAny) -> PyResult<PyObject> {

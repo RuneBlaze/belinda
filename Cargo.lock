@@ -146,6 +146,7 @@ dependencies = [
  "anyhow",
  "aocluster",
  "arrow2",
+ "itertools",
  "polars",
  "pyo3",
  "roaring",
