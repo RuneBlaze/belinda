@@ -6,7 +6,6 @@ use pyo3::exceptions::PyValueError;
 use pyo3::ffi::Py_uintptr_t;
 use pyo3::{
     prelude::*,
-    types::{PyDict, PyList},
 };
 
 /// Take an arrow array from python and convert it to a rust arrow array.
@@ -78,7 +77,7 @@ pub fn translate_df(df: &mut DataFrame) -> PyResult<PyObject> {
     let columns = df.get_columns_mut();
     let py_series = columns
         .iter_mut()
-        .map(|s| series_to_arrow(s))
+        .map(series_to_arrow)
         .collect::<PyResult<Vec<PySeries>>>()?;
     let gil = Python::acquire_gil();
     let py = gil.python();

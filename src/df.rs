@@ -1,12 +1,10 @@
 // use arrow::array::{BinaryArray, MutableBinaryArray};
 use polars::export::arrow::array::{
-    Array, BinaryArray, BooleanArray, MutableBinaryArray, MutableBooleanArray,
-    MutablePrimitiveArray, PrimitiveArray,
+    Array, BinaryArray, MutableBinaryArray,
 };
 use polars::prelude::*;
 use polars::{
-    datatypes::AnyValue,
-    prelude::{PolarsError, PolarsResult},
+    prelude::{PolarsError},
 };
 use polars::{prelude::NamedFrom, series::Series};
 use roaring::{MultiOps, RoaringBitmap, RoaringTreemap};
@@ -33,28 +31,28 @@ pub trait VecEfficientSet {
 
 impl VecEfficientSet for Vec<EfficientSet> {
     fn union(self) -> EfficientSet {
-        let smallset: Vec<EfficientSet> = vec![];
-        let bigset: Vec<EfficientSet> = vec![];
+        let _smallset: Vec<EfficientSet> = vec![];
+        let _bigset: Vec<EfficientSet> = vec![];
         let (smallset, bigset): (Vec<_>, Vec<_>) = self.into_iter().partition(|s| match s {
             EfficientSet::SmallSet(_) => true,
             EfficientSet::BigSet(_) => false,
         });
-        if smallset.len() > 0 {
-            return EfficientSet::SmallSet(
+        if !smallset.is_empty() {
+            EfficientSet::SmallSet(
                 smallset
                     .into_iter()
                     .map(|it| it.try_into().unwrap())
                     .collect::<Vec<RoaringBitmap>>()
                     .union(),
-            );
+            )
         } else {
-            return EfficientSet::BigSet(
+            EfficientSet::BigSet(
                 bigset
                     .into_iter()
                     .map(|it| it.try_into().unwrap())
                     .collect::<Vec<RoaringTreemap>>()
                     .union(),
-            );
+            )
         }
     }
 }
@@ -65,7 +63,7 @@ impl TryFrom<EfficientSet> for RoaringBitmap {
     fn try_from(value: EfficientSet) -> Result<Self, Self::Error> {
         match value {
             EfficientSet::SmallSet(set) => Ok(set),
-            EfficientSet::BigSet(set) => Err(PolarsError::InvalidOperation(
+            EfficientSet::BigSet(_set) => Err(PolarsError::InvalidOperation(
                 "Cannot convert BigSet to RoaringBitmap".into(),
             )),
         }
@@ -77,7 +75,7 @@ impl TryFrom<EfficientSet> for RoaringTreemap {
 
     fn try_from(value: EfficientSet) -> Result<Self, Self::Error> {
         match value {
-            EfficientSet::SmallSet(set) => Err(PolarsError::InvalidOperation(
+            EfficientSet::SmallSet(_set) => Err(PolarsError::InvalidOperation(
                 "Cannot convert SmallSet to RoaringTreemap".into(),
             )),
             EfficientSet::BigSet(set) => Ok(set),

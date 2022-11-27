@@ -7,17 +7,16 @@ use aocluster::{
     DefaultGraph,
 };
 use polars::prelude::*;
-use polars::{df, lazy::dsl::Expr};
-use polars_plan::prelude::{ApplyOptions, FunctionOptions};
+use polars::{df};
+
 use pyo3::{
     prelude::*,
     types::{PyDict, PyList},
 };
 use roaring::{MultiOps, RoaringBitmap, RoaringTreemap};
 use std::{
-    borrow::BorrowMut,
     collections::HashMap,
-    sync::{Arc, Mutex},
+    sync::{Arc},
 };
 
 use crate::{
@@ -25,7 +24,7 @@ use crate::{
         build_series_from_bitmap, build_series_from_sets, iter_roaring, EfficientSet,
         VecEfficientSet,
     },
-    ffi::{self, py_series_to_rust_series, translate_df, PySeries},
+    ffi::{self, translate_df},
 };
 
 #[pyfunction]
@@ -52,7 +51,7 @@ pub fn read_clusters(
         "mcd" => clus.data.clusters.values().map(|v| v.mcd).collect::<Vec<_>>(),
         "nodes" => build_series_from_bitmap(clus.data.clusters.values().map(|v| v.nodes.clone()).collect::<Vec<_>>()),
     ).unwrap();
-    Ok(translate_df(&mut df)?)
+    translate_df(&mut df)
 }
 
 #[pyclass]
@@ -120,7 +119,7 @@ impl ClusDataFrame for DataFrame {
 
     fn covered_num_nodes(&self) -> anyhow::Result<u32> {
         self.column("can_overlap")
-            .and_then(|can_overlap| {
+            .and_then(|_can_overlap| {
                 let nodesets = self.column("nodes")?;
                 let nodesets = iter_roaring(nodesets)
                     .map(|it| it.try_into().unwrap())
@@ -133,15 +132,15 @@ impl ClusDataFrame for DataFrame {
             })
     }
 
-    fn edges(&self, graph: &DefaultGraph) -> anyhow::Result<Series> {
+    fn edges(&self, _graph: &DefaultGraph) -> anyhow::Result<Series> {
         todo!()
     }
 
-    fn covered_edges(&self, graph: &DefaultGraph) -> anyhow::Result<Series> {
+    fn covered_edges(&self, _graph: &DefaultGraph) -> anyhow::Result<Series> {
         todo!()
     }
 
-    fn can_overlap(&self, graph: &DefaultGraph) -> bool {
+    fn can_overlap(&self, _graph: &DefaultGraph) -> bool {
         todo!()
     }
 }
@@ -163,11 +162,11 @@ impl Graph {
         let nodesets = iter_roaring(&series)
             .map(|it| it.try_into().unwrap())
             .map(|it| edgeset(g, &it))
-            .map(|it| EfficientSet::BigSet(it))
+            .map(EfficientSet::BigSet)
             .collect::<Vec<_>>();
-        Ok(ffi::rust_series_to_py_series(&build_series_from_sets(
+        ffi::rust_series_to_py_series(&build_series_from_sets(
             nodesets,
-        ))?)
+        ))
     }
 
     #[getter]
@@ -293,7 +292,7 @@ impl Clustering {
                     .extract()
                     .unwrap()
             })
-            .map(|(k, v)| k)
+            .map(|(k, _v)| k)
             .copied()
             .collect();
         let has_singletons = f
@@ -382,7 +381,7 @@ impl SummarizedDistributionWrapper {
 impl SummarizedDistributionWrapper {
     #[getter]
     pub fn percentiles(&self) -> Vec<f64> {
-        self.data.percentiles.iter().cloned().collect()
+        self.data.percentiles.to_vec()
     }
 
     #[getter]
@@ -479,14 +478,14 @@ pub fn rust_edgeset(series: &Series) -> Series {
 pub fn py_popcnt(series: &PyAny) -> PyResult<PyObject> {
     let series = ffi::py_series_to_rust_series(series)?;
     let out = rust_popcnt(&series);
-    Ok(ffi::rust_series_to_py_series(&out)?)
+    ffi::rust_series_to_py_series(&out)
 }
 
 #[pyfunction(name = "union")]
 pub fn py_bitmap_union(series: &PyAny) -> PyResult<PyObject> {
     let series = ffi::py_series_to_rust_series(series)?;
     let out = rust_bitmap_union(&series);
-    Ok(ffi::rust_series_to_py_series(&out)?)
+    ffi::rust_series_to_py_series(&out)
 }
 
 #[pymethods]
@@ -521,7 +520,7 @@ impl ClusteringSubset {
             .map(|it| it.mcd)
             .collect::<Vec<_>>();
         let mut df = df!("mcd" => mcd).unwrap();
-        Ok(translate_df(&mut df)?)
+        translate_df(&mut df)
     }
 
     fn keys(&self) -> Vec<u32> {
@@ -554,9 +553,9 @@ impl ClusteringSubset {
     #[getter]
     fn num_singletons(&self) -> u32 {
         if self.data.has_singletons {
-            return self.data.clustering.singleton_clusters.len() as u32;
+            self.data.clustering.singleton_clusters.len() as u32
         } else {
-            return 0;
+            0
         }
     }
 

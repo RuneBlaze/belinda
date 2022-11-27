@@ -147,7 +147,6 @@ dependencies = [
  "aocluster",
  "arrow2",
  "polars",
- "polars-plan",
  "pyo3",
  "roaring",
 ]

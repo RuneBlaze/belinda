@@ -16,7 +16,7 @@ pyo3 = { version = "0.16.5", features = ["extension-module","abi3-py37"] }
 aocluster = {git = "https://github.com/illinois-or-research-analytics/aocv2_rs"}
 ahash = { version = "0.8.0", features = ["serde"]}
 polars = { version = "0.25.1", features = ["dtype-binary", "private", "serde", "lazy"]}
-polars-plan = { version = "0.25.1", features = ["private"]}
+# polars-plan = { version = "0.25.1", features = ["private"]}
 roaring = "0.10.1"
 arrow = { package = "arrow2", version = "0.14.2" }
 anyhow = "1.0.66"
