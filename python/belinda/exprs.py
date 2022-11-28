@@ -1,5 +1,6 @@
 from polars import col, when
 from polars import Expr
+import polars as pl
 from .belinda import *
 
 def cpm(r):
@@ -18,10 +19,62 @@ def vol1(self):
 def conductance(self):
     return when(col("n") > 1).then((col("c") / self.vol1())).otherwise(None).alias("conductance")
 
+def node_coverage(self, overlap=False):
+    a = "node_coverage"
+    if overlap:
+        return (pl.col("nodes").set.union().set.popcnt() / self.n).alias(a)
+    else:
+        return (pl.col("n").sum() / self.n).alias(a)
+
+def edge_coverage(self, overlap=False):
+    a = "edge_coverage"
+    if overlap:
+        return (self.intra_edges(pl.col("nodes")).set.union().set.popcnt() / self.m).alias(a)
+    else:
+        return (pl.col("m").sum() / self.m).alias(a)
+
+def verbose_statistics(graph, clustering, overlap=False, statistics=[]):
+    return clustering.select([
+        graph.node_coverage(overlap),
+        graph.edge_coverage(overlap),
+        *statistics
+    ])
+
+def summary_statistics(graph, clustering, overlap=False, statistics=[]):
+    return verbose_statistics(graph, clustering, overlap, statistics).describe()
+
+def one_liner(graph, clustering, overlap=False, statistics=[]):
+    return clustering.select([
+        graph.node_coverage(overlap),
+        graph.edge_coverage(overlap),
+        *[pl.concat_list([s.quantile(0), s.quantile(0.5), s.quantile(1)]) for s in statistics]
+    ])
+
+def write_assignment(graph, clustering, filepath):
+    df = graph.nodes(clustering)
+    with open(filepath, "w+") as fh:
+        for n, lbls in zip(df.get_column("node"), df.get_column("labels")):
+            for l in lbls:
+                fh.write(f"{n}\t{l}\n")
+
 setattr(Graph, "modularity", modularity)
 setattr(Graph, "cpm", lambda self, r: cpm(r))
 setattr(Graph, "intra_edges", lambda self, exprs: exprs.map(lambda x: self.covered_edges(x)))
 setattr(Graph, "conductance", conductance)
 setattr(Graph, "vol1", vol1)
-setattr(Expr, "popcnt", lambda self: self.map(popcnt))
-setattr(Expr, "union", lambda self: self.map(lambda x: union(x)))
+setattr(Graph, "node_coverage", node_coverage)
+setattr(Graph, "edge_coverage", edge_coverage)
+
+@pl.api.register_expr_namespace("set")
+class EfficientSet:
+    def __init__(self, expr: pl.Expr):
+        self._expr = expr
+    
+    def popcnt(self):
+        return self._expr.map(popcnt)
+
+    def len(self):
+        return self._expr.map(popcnt)
+    
+    def union(self):
+        return self._expr.map(lambda x: union(x))

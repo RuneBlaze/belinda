@@ -2,9 +2,6 @@ import pytest
 from belinda import *
 import polars as pl
 g = Graph("resources/com-dblp.bincode.lz4")
-# c = #pl.read_csv("resources/clus.str.txt", has_header=False, sep='\t')
-print(g.m * 2 / g.n)
-modes = [SingletonMode.Ignore, SingletonMode.AsIs, SingletonMode.AutoPopulate]
-df = read_json(g, "resources/clus.json", modes[1])
-print(df)
-print(g.n, modes[1], df.select([g.conductance().max()]))
+c = read_assignment(g, "resources/clus.str.txt", mode=SingletonMode.Ignore)
+print(one_liner(g, c, overlap=False, statistics=[g.modularity(), g.cpm(1), g.conductance(), pl.col('mcd'), pl.col('n')]))
+write_assignment(g, c, "resources/clus.str.mod.txt")

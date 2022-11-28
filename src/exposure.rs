@@ -91,8 +91,8 @@ pub fn read_json<P: AsRef<Path>>(g: &Graph, filepath: P, mode: SingletonMode) ->
     let mut nodes = node_list_to_bitmaps(g, df.column("nodes")?)?;
     nodes.rename("nodes");
     df.with_column(nodes)?;
-    populate_clusdf(g, &mut df)?;
     df = post_read_singleton(g, df, mode)?;
+    populate_clusdf(g, &mut df)?;
     Ok(df)
 }
 
@@ -173,6 +173,23 @@ pub fn read_assignment_series(
     Ok(df)
 }
 
+pub fn read_assignment_file(g: &Graph, filepath: &str, sep: u8, mode: SingletonMode) -> anyhow::Result<DataFrame> {
+    let df = CsvReader::from_path(filepath)?
+            .has_header(false)
+            .with_delimiter(sep)
+            .finish()?;
+    let nid = df.column("column_1")?;
+    let cid = df.column("column_2")?;
+    read_assignment_series(g, nid, cid, mode)
+}
+
+#[pyfunction(name = "read_assignment", mode = "SingletonMode::AutoPopulate", sep = "b'\\t'")]
+pub fn py_read_assignment_file(g: &Graph, filepath: &str, sep: u8, mode: SingletonMode) -> PyResult<PyObject> {
+    let mut df = read_assignment_file(g, filepath, sep, mode).unwrap();
+    let translated = translate_df(&mut df)?;
+    Ok(translated)
+}
+
 #[pyfunction(name = "read_assignment_series", mode = "SingletonMode::AutoPopulate")]
 pub fn py_from_assignments(
     g: &Graph,
@@ -227,24 +244,24 @@ pub fn node_list_to_bitmaps(g: &Graph, list: &Series) -> anyhow::Result<Series> 
     Ok(sets.to_series())
 }
 
-#[pyfunction(with_singletons = "true")]
-pub fn read_clusters(
-    py: Python,
-    g: &Graph,
-    clus_path: &str,
-    with_singletons: bool,
-) -> PyResult<PyObject> {
-    let clus = Clustering::new(py, g, clus_path, None)?;
-    let mut df = df!(
-        "label" => clus.data.clusters.keys().copied().collect_vec(),
-        "n" => clus.data.clusters.values().map(|v| v.n as u32).collect_vec(),
-        "m" => clus.data.clusters.values().map(|v| v.m).collect_vec(),
-        "c" => clus.data.clusters.values().map(|v| v.c).collect_vec(),
-        "mcd" => clus.data.clusters.values().map(|v| v.mcd).collect_vec(),
-        "nodes" => build_series_from_bitmap(clus.data.clusters.values().map(|v| v.nodes.clone()).collect_vec()),
-    ).unwrap();
-    translate_df(&mut df)
-}
+// #[pyfunction(with_singletons = "true")]
+// pub fn read_clusters(
+//     py: Python,
+//     g: &Graph,
+//     clus_path: &str,
+//     with_singletons: bool,
+// ) -> PyResult<PyObject> {
+//     let clus = Clustering::new(py, g, clus_path, None)?;
+//     let mut df = df!(
+//         "label" => clus.data.clusters.keys().copied().collect_vec(),
+//         "n" => clus.data.clusters.values().map(|v| v.n as u32).collect_vec(),
+//         "m" => clus.data.clusters.values().map(|v| v.m).collect_vec(),
+//         "c" => clus.data.clusters.values().map(|v| v.c).collect_vec(),
+//         "mcd" => clus.data.clusters.values().map(|v| v.mcd).collect_vec(),
+//         "nodes" => build_series_from_bitmap(clus.data.clusters.values().map(|v| v.nodes.clone()).collect_vec()),
+//     ).unwrap();
+//     translate_df(&mut df)
+// }
 
 #[pyclass]
 #[derive(Clone)]
@@ -261,28 +278,9 @@ pub trait ClusDataFrame {
     fn can_overlap(&self, graph: &DefaultGraph) -> bool;
 }
 
-// fn series_cpm(n: &Series, m: &Series, resolution: f64) -> anyhow::Result<Series> {
-//     let n = n.u32()?;
-//     let m = m.u64()?;
-//     Ok(n.into_iter()
-//         .zip(m.into_iter())
-//         .map(|(n, m)| calc_cpm_resolution(m.unwrap() as usize, n.unwrap() as usize, resolution))
-//         .collect())
-// }
-
-// #[pyfunction]
-// pub fn cpm(df: &PyAny, r: f64) -> PyResult<PyObject> {
-//     let n_series = df.call_method1("get_column", ("n",))?;
-//     let m_series = df.call_method1("get_column", ("m",))?;
-//     let n_series = ffi::py_series_to_rust_series(n_series)?;
-//     let m_series = ffi::py_series_to_rust_series(m_series)?;
-//     let cpm_series = series_cpm(&n_series, &m_series, r).unwrap();
-//     Ok(ffi::rust_series_to_py_series(&cpm_series)?)
-// }
 
 impl ClusDataFrame for DataFrame {
     fn modularity(&self, graph: &Graph, resolution: f64) -> anyhow::Result<Series> {
-        // let n = self.column("n")?.u32()?;
         let m = self.column("m")?.u64()?;
         let c = self.column("c")?.u64()?;
         let total_l = graph.m();
@@ -346,6 +344,51 @@ impl Graph {
         Graph {
             data: Arc::new(raw_data),
         }
+    }
+
+    #[args(verbose=false)]
+    fn nodes(&self, clus: Option<&PyAny>, verbose: bool) -> PyResult<PyObject> {
+        let g = &self.data.graph;
+        let nodes = (0..self.n()).map(|it| g.name_set.rev[it as usize] as u32).collect_vec();
+        let degrees = (0..self.n()).map(|it| g.nodes[it as usize].degree() as u32).collect_vec();
+        let mut df = df!(
+            "node" => nodes,
+            "degree" => degrees,
+        ).unwrap();
+        if verbose {
+            let adj = (0..self.n()).map(|it| g.nodes[it as usize].edges.iter().map(|it| g.name_set.rev[*it] as u32).collect::<Series>()).collect_vec();
+            df.with_column(Series::new("adj", adj)).unwrap();
+        }
+        if let Some(clus) = clus {
+            let label = ffi::py_series_to_rust_series(clus.call_method1("get_column", ("label", ))?)?;
+            let label_t = label.dtype();
+            let mut labels_u32 : Vec<Vec<Option<u32>>> = vec![vec![]; self.n() as usize];
+            let mut labels_str : Vec<Vec<String>> = vec![vec![]; self.n() as usize];
+            let nodes = ffi::py_series_to_rust_series(clus.call_method1("get_column", ("nodes", ))?)?;
+            if label_t == &DataType::UInt32 {
+                for (ns, label) in iter_roaring(&nodes).zip(label.u32().unwrap()) {
+                    let ns : RoaringBitmap = ns.try_into().unwrap();
+                    for node in ns.into_iter() {
+                        labels_u32[node as usize].push(label);
+                    }
+                }
+            } else {
+                for (ns, label) in iter_roaring(&nodes).zip(label.utf8().unwrap()) {
+                    let ns : RoaringBitmap = ns.try_into().unwrap();
+                    for node in ns.into_iter() {
+                        labels_str[node as usize].push(label.unwrap_or_default().to_string());
+                    }
+                }
+            }
+            let labels_u32 = labels_u32.into_iter().map(|it| it.into_iter().collect::<Series>()).collect_vec();
+            let labels_str = labels_str.into_iter().map(|it| it.into_iter().collect::<Series>()).collect_vec();
+            if label_t == &DataType::UInt32 {
+                df.with_column(Series::new("labels", labels_u32)).unwrap();
+            } else {
+                df.with_column(Series::new("labels", labels_str)).unwrap();
+            }
+        }
+        Ok(translate_df(&mut df)?)
     }
 
     fn covered_edges(&self, n: &PyAny) -> PyResult<PyObject> {
