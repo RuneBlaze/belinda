@@ -1,11 +1,7 @@
 // use arrow::array::{BinaryArray, MutableBinaryArray};
-use polars::export::arrow::array::{
-    Array, BinaryArray, MutableBinaryArray,
-};
+use polars::export::arrow::array::{Array, BinaryArray, MutableBinaryArray};
+use polars::prelude::PolarsError;
 use polars::prelude::*;
-use polars::{
-    prelude::{PolarsError},
-};
 use polars::{prelude::NamedFrom, series::Series};
 use roaring::{MultiOps, RoaringBitmap, RoaringTreemap};
 
@@ -27,6 +23,7 @@ impl EfficientSet {
 
 pub trait VecEfficientSet {
     fn union(self) -> EfficientSet;
+    fn to_series(self) -> Series;
 }
 
 impl VecEfficientSet for Vec<EfficientSet> {
@@ -54,6 +51,10 @@ impl VecEfficientSet for Vec<EfficientSet> {
                     .union(),
             )
         }
+    }
+
+    fn to_series(self) -> Series {
+        build_series_from_sets(self)
     }
 }
 

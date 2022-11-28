@@ -1,9 +1,10 @@
 mod df;
 mod exposure;
 mod ffi;
+mod io;
 use exposure::{
-    py_bitmap_union, py_popcnt, read_clusters, set_nthreads, ClusterSkeleton, Clustering, Graph,
-    SummarizedDistributionWrapper,
+    py_bitmap_union, py_from_assignments, py_popcnt, read_clusters, set_nthreads, ClusterSkeleton,
+    Clustering, Graph, SingletonMode, SummarizedDistributionWrapper, py_read_json,
 };
 use pyo3::prelude::*;
 
@@ -18,6 +19,9 @@ fn belinda(_py: Python, m: &PyModule) -> PyResult<()> {
     m.add_function(wrap_pyfunction!(read_clusters, m)?)?;
     m.add_function(wrap_pyfunction!(py_popcnt, m)?)?;
     m.add_function(wrap_pyfunction!(py_bitmap_union, m)?)?;
+    m.add_class::<SingletonMode>()?;
+    m.add_function(wrap_pyfunction!(py_from_assignments, m)?)?;
+    m.add_function(wrap_pyfunction!(py_read_json, m)?)?;
     // let child_module = PyModule::new(_py, "belinda.stats")?;
     // m.add_function(wrap_pyfunction!(cpm, m)?)?;
     // m.add_submodule(child_module)?;

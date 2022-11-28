@@ -7,18 +7,15 @@ use aocluster::{
     DefaultGraph,
 };
 use itertools::Itertools;
+use polars::df;
 use polars::prelude::*;
-use polars::{df};
 
 use pyo3::{
     prelude::*,
     types::{PyDict, PyList},
 };
 use roaring::{MultiOps, RoaringBitmap, RoaringTreemap};
-use std::{
-    collections::HashMap,
-    sync::{Arc},
-};
+use std::{collections::HashMap, sync::Arc, path::Path, io::BufReader};
 
 use crate::{
     df::{
@@ -34,6 +31,200 @@ pub fn set_nthreads(nthreads: usize) {
         .num_threads(nthreads)
         .build_global()
         .unwrap();
+}
+
+#[derive(Debug, Clone, PartialEq, Hash)]
+#[pyclass]
+pub enum SingletonMode {
+    AutoPopulate,
+    Ignore,
+    AsIs,
+}
+
+pub fn populate_clusdf(
+    g: &Graph,
+    df: &mut DataFrame,
+) -> anyhow::Result<()> {
+    let g = &g.data.graph;
+    let mut n_s = vec![];
+    let mut m_s = vec![];
+    let mut c_s = vec![];
+    let mut mcd_s = vec![];
+    for nodeset in iter_roaring(df.column("nodes")?) {
+        let nodes: RoaringBitmap = nodeset.try_into()?;
+        let mut m = 0u64;
+        let mut c = 0u64;
+        let mut mcd = (g.m() + 1) as u64;
+        for u in nodes.iter() {
+            let adj = &g.nodes[u as usize].edges;
+            let mut inside_connectivity = 0;
+            for &v in adj {
+                if nodes.contains(v as u32) {
+                    m += 1;
+                    inside_connectivity += 1;
+                } else {
+                    c += 1;
+                }
+            }
+            mcd = mcd.min(inside_connectivity);
+        }
+        if mcd == (g.m() + 1) as u64 {
+            mcd = 0;
+        }
+        m /= 2;
+        n_s.push(nodes.len() as u32);
+        m_s.push(m);
+        c_s.push(c);
+        mcd_s.push(mcd);
+    };
+    df.with_column(Series::new("n", n_s))?;
+    df.with_column(Series::new("m", m_s))?;
+    df.with_column(Series::new("c", c_s))?;
+    df.with_column(Series::new("mcd", mcd_s))?;
+    Ok(())
+}
+
+pub fn read_json<P: AsRef<Path>>(g: &Graph, filepath: P, mode: SingletonMode) -> anyhow::Result<DataFrame> {
+    let mut file = std::fs::File::open(filepath)?;
+    let mut df = JsonLineReader::new(&mut file).finish()?;
+    df.with_column(df.column("nodes")?.cast(&DataType::List(Box::new(DataType::UInt32)))?)?;
+    let mut nodes = node_list_to_bitmaps(g, df.column("nodes")?)?;
+    nodes.rename("nodes");
+    df.with_column(nodes)?;
+    populate_clusdf(g, &mut df)?;
+    df = post_read_singleton(g, df, mode)?;
+    Ok(df)
+}
+
+pub fn post_read_singleton(g: &Graph, mut df: DataFrame, mode: SingletonMode) -> anyhow::Result<DataFrame> {
+    if mode == SingletonMode::Ignore {
+        let mask: Series = df
+            .column("nodes")?
+            .list()?
+            .into_iter()
+            .map(|f| f.map_or(false, |e| e.len() > 1))
+            .collect();
+        df = df.filter(mask.bool()?)?;
+    }
+    if mode == SingletonMode::AutoPopulate {
+        let covered_nodes = iter_roaring(df.column("nodes")?).collect_vec().union();
+        let covered_nodes: RoaringBitmap = covered_nodes.try_into()?;
+        let mut new_labels = vec![];
+        let mut new_nodes: Vec<EfficientSet> = vec![];
+        if covered_nodes.len() < g.n().into() {
+            for i in 0..g.n() {
+                if !covered_nodes.contains(i) {
+                    new_labels.push(AnyValue::Null);
+                    new_nodes.push(RoaringBitmap::from_iter([i]).into())
+                }
+            }
+        }
+        let new_labels =
+            Series::from_any_values_and_dtype("label", &new_labels, df.column("label")?.dtype())?;
+        let extend_df = df!("label" => new_labels, "nodes" => new_nodes.to_series())?;
+        df.extend(&extend_df)?;
+    }
+    Ok(df)
+}
+
+pub fn read_assignment_series(
+    g: &Graph,
+    nodes: &Series,
+    cids: &Series,
+    mode: SingletonMode,
+) -> anyhow::Result<DataFrame> {
+    let df = df!("nid" => nodes.cast(&DataType::UInt32)?, "cid" => cids)?;
+    let mut df = df
+        .lazy()
+        .groupby(["cid"])
+        .agg([col("nid").list()])
+        .collect()?;
+    if mode == SingletonMode::Ignore {
+        let mask: Series = df
+            .column("nid")?
+            .list()?
+            .into_iter()
+            .map(|f| f.map_or(false, |e| e.len() > 1))
+            .collect();
+        df = df.filter(mask.bool()?)?;
+    }
+    let mut nodes = node_list_to_bitmaps(g, df.column("nid")?)?;
+    nodes.rename("nodes");
+    let mut df = df!("label" => df.column("cid")?, "nodes" => nodes)?;
+    if mode == SingletonMode::AutoPopulate {
+        let covered_nodes = iter_roaring(df.column("nodes")?).collect_vec().union();
+        let covered_nodes: RoaringBitmap = covered_nodes.try_into()?;
+        let mut new_labels = vec![];
+        let mut new_nodes: Vec<EfficientSet> = vec![];
+        if covered_nodes.len() < g.n().into() {
+            for i in 0..g.n() {
+                if !covered_nodes.contains(i) {
+                    new_labels.push(AnyValue::Null);
+                    new_nodes.push(RoaringBitmap::from_iter([i]).into())
+                }
+            }
+        }
+        let new_labels =
+            Series::from_any_values_and_dtype("label", &new_labels, df.column("label")?.dtype())?;
+        let extend_df = df!("label" => new_labels, "nodes" => new_nodes.to_series())?;
+        df.extend(&extend_df)?;
+    }
+    populate_clusdf(g, &mut df)?;
+    Ok(df)
+}
+
+#[pyfunction(name = "read_assignment_series", mode = "SingletonMode::AutoPopulate")]
+pub fn py_from_assignments(
+    g: &Graph,
+    nodes: &PyAny,
+    cids: &PyAny,
+    mode: SingletonMode,
+) -> PyResult<PyObject> {
+    let nodes = ffi::py_series_to_rust_series(nodes)?;
+    let cids = ffi::py_series_to_rust_series(cids)?;
+    let mut df = read_assignment_series(g, &nodes, &cids, mode).unwrap();
+    Ok(translate_df(&mut df)?)
+}
+
+#[pyfunction(name = "read_json", mode = "SingletonMode::AutoPopulate")]
+pub fn py_read_json(g: &Graph, filepath: &str, mode: SingletonMode) -> PyResult<PyObject> {
+    let mut df = read_json(g, filepath, mode).unwrap();
+    Ok(translate_df(&mut df)?)
+}
+
+pub fn node_list_to_bitmaps(g: &Graph, list: &Series) -> anyhow::Result<Series> {
+    let g = &g.data.graph;
+    let as_list = list.list()?;
+    let sets: Vec<EfficientSet> = as_list
+        .into_iter()
+        .map(|e| {
+            e.map_or_else(
+                || RoaringBitmap::new().into(),
+                |series| {
+                    let mut seen_nonexistent = false;
+                    let mut bitmap = RoaringBitmap::new();
+                    series
+                        .u32()
+                        .unwrap()
+                        .into_iter()
+                        .filter_map(|x| x)
+                        .for_each(|x| match g.retrieve(x as usize) {
+                            Some(internal_id) => {
+                                bitmap.insert(internal_id as u32);
+                            }
+                            None => {
+                                if seen_nonexistent {
+                                    panic!("Nonexistent node that is not singleton: {}", x);
+                                }
+                                seen_nonexistent = true;
+                            }
+                        });
+                    bitmap.into()
+                },
+            )
+        })
+        .collect();
+    Ok(sets.to_series())
 }
 
 #[pyfunction(with_singletons = "true")]
@@ -165,9 +356,7 @@ impl Graph {
             .map(|it| edgeset(g, &it))
             .map(EfficientSet::BigSet)
             .collect::<Vec<_>>();
-        ffi::rust_series_to_py_series(&build_series_from_sets(
-            nodesets,
-        ))
+        ffi::rust_series_to_py_series(&build_series_from_sets(nodesets))
     }
 
     #[getter]
@@ -182,7 +371,7 @@ impl Graph {
 
     fn __str__(&self) -> PyResult<String> {
         Ok(format!(
-            "Graph(n={}, m ={})",
+            "Graph(n={}, m={})",
             self.data.graph.n(),
             self.data.graph.m()
         ))

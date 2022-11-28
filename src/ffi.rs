@@ -4,9 +4,7 @@ use polars::prelude::{ArrayRef, ArrowField};
 use polars::series::Series;
 use pyo3::exceptions::PyValueError;
 use pyo3::ffi::Py_uintptr_t;
-use pyo3::{
-    prelude::*,
-};
+use pyo3::prelude::*;
 
 /// Take an arrow array from python and convert it to a rust arrow array.
 /// This operation does not copy data.

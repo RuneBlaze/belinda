@@ -1,6 +1,6 @@
 [package]
 name = "belinda"
-version = "0.0.3"
+version = "0.0.4-alpha"
 edition = "2021"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
@@ -15,7 +15,7 @@ crate-type = ["cdylib"]
 pyo3 = { version = "0.16.5", features = ["extension-module","abi3-py37"] }
 aocluster = {git = "https://github.com/illinois-or-research-analytics/aocv2_rs"}
 ahash = { version = "0.8.0", features = ["serde"]}
-polars = { version = "0.25.1", features = ["dtype-binary", "private", "serde", "lazy"]}
+polars = { version = "0.25.1", features = ["dtype-binary", "private", "serde", "lazy", "json"]}
 roaring = "0.10.1"
 itertools = "0.10.5"
 arrow = { package = "arrow2", version = "0.14.2" }
