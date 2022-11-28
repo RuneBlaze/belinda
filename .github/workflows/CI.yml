@@ -268,9 +268,9 @@ jobs:
       - macos
       - windows
       - linux
-      - linux-cross
+      # - linux-cross
       - musllinux
-      - musllinux-cross
+      # - musllinux-cross
     if: ${{ github.ref == 'refs/heads/main' }}
     steps:
       - uses: actions/download-artifact@v2
