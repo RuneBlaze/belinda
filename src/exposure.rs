@@ -365,8 +365,8 @@ impl Graph {
             let mut labels_u32 : Vec<Vec<Option<u32>>> = vec![vec![]; self.n() as usize];
             let mut labels_str : Vec<Vec<String>> = vec![vec![]; self.n() as usize];
             let nodes = ffi::py_series_to_rust_series(clus.call_method1("get_column", ("nodes", ))?)?;
-            if label_t == &DataType::UInt32 {
-                for (ns, label) in iter_roaring(&nodes).zip(label.u32().unwrap()) {
+            if label_t != &DataType::Utf8 {
+                for (ns, label) in iter_roaring(&nodes).zip(label.cast(&DataType::UInt32).unwrap().u32().unwrap()) {
                     let ns : RoaringBitmap = ns.try_into().unwrap();
                     for node in ns.into_iter() {
                         labels_u32[node as usize].push(label);
@@ -382,7 +382,7 @@ impl Graph {
             }
             let labels_u32 = labels_u32.into_iter().map(|it| it.into_iter().collect::<Series>()).collect_vec();
             let labels_str = labels_str.into_iter().map(|it| it.into_iter().collect::<Series>()).collect_vec();
-            if label_t == &DataType::UInt32 {
+            if label_t != &DataType::Utf8 {
                 df.with_column(Series::new("labels", labels_u32)).unwrap();
             } else {
                 df.with_column(Series::new("labels", labels_str)).unwrap();
