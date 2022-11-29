@@ -3,8 +3,9 @@ mod exposure;
 mod ffi;
 mod io;
 use exposure::{
-    py_bitmap_union, py_from_assignments, py_popcnt, py_read_assignment_file, py_read_json,
-    set_nthreads, ClusterSkeleton, Clustering, Graph, SingletonMode, SummarizedDistributionWrapper, py_label_cc, py_label_cc_size, py_nodeset_to_list,
+    py_bitmap_union, py_from_assignments, py_label_cc, py_label_cc_size, py_nodeset_to_list,
+    py_popcnt, py_read_assignment_file, py_read_json, set_nthreads, ClusterSkeleton, Clustering,
+    Graph, SingletonMode, SummarizedDistributionWrapper,
 };
 use pyo3::prelude::*;
 

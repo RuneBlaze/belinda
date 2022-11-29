@@ -1,4 +1,3 @@
-// use arrow::array::{BinaryArray, MutableBinaryArray};
 use polars::export::arrow::array::{Array, BinaryArray, MutableBinaryArray};
 use polars::prelude::PolarsError;
 use polars::prelude::*;
@@ -165,7 +164,6 @@ pub fn build_series_from_sets(nodesets: Vec<EfficientSet>) -> Series {
     Series::try_from(("nodes", Box::new(result) as ArrayRef)).unwrap()
 }
 
-/// Helper function to iterate over geometries from polars Series
 pub(crate) fn iter_roaring(series: &Series) -> impl Iterator<Item = EfficientSet> + '_ {
     let chunks = series.binary().expect("series was not a list type");
     let iter = chunks.into_iter();

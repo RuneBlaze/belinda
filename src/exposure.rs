@@ -1,15 +1,21 @@
+use ahash::{AHashMap, AHashSet};
 use aocluster::{
-    aoc::rayon,
+    alg::{self, CCLabels},
+    aoc::rayon::{
+        self,
+        prelude::{IndexedParallelIterator, IntoParallelIterator, ParallelIterator},
+    },
     belinda::{
         ClusteringHandle, ClusteringSource, EnrichedGraph, GraphStats, RichCluster, RichClustering,
     },
     utils::{calc_cpm_resolution, calc_modularity_resolution},
-    DefaultGraph, alg::{CCLabels, self},
+    DefaultGraph,
 };
 use arrow::bitmap::Bitmap;
+use indicatif::ParallelProgressIterator;
 use itertools::Itertools;
-use polars::{df, export::once_cell::sync::OnceCell};
 use polars::prelude::*;
+use polars::{df, export::once_cell::sync::OnceCell};
 
 use pyo3::{
     prelude::*,
@@ -44,33 +50,37 @@ pub enum SingletonMode {
 
 pub fn populate_clusdf(g: &Graph, df: &mut DataFrame) -> anyhow::Result<()> {
     let g = &g.data.graph;
-    let mut n_s = vec![];
-    let mut m_s = vec![];
-    let mut c_s = vec![];
-    let mut mcd_s = vec![];
-    for nodeset in iter_roaring(df.column("nodes")?) {
-        let nodes: RoaringBitmap = nodeset.try_into()?;
-        let mut m = 0u64;
-        let mut c = 0u64;
-        let mut mcd = (g.m() + 1) as u64;
-        for u in nodes.iter() {
-            let adj = &g.nodes[u as usize].edges;
-            let mut inside_connectivity = 0;
-            for &v in adj {
-                if nodes.contains(v as u32) {
-                    m += 1;
-                    inside_connectivity += 1;
-                } else {
-                    c += 1;
-                }
+    let bitmaps: Vec<RoaringBitmap> = iter_roaring(df.column("nodes")?)
+        .map(|n| n.try_into().unwrap())
+        .collect_vec();
+    let edges_bitmaps = g.nodes.iter().map(|n| RoaringBitmap::from_sorted_iter(n.edges.iter().map(|it| *it as u32)).unwrap()).collect_vec();
+    let n = bitmaps.len();
+    let data: Vec<_> = bitmaps
+        .into_par_iter()
+        .map(|nodes| {
+            let mut m = 0u64;
+            let mut c = 0u64;
+            let mut mcd = (g.m() + 1) as u64;
+            for u in nodes.iter() {
+                let adj = &edges_bitmaps[u as usize];
+                let ic = adj.intersection_len(&nodes);
+                m += ic;
+                c += adj.len() as u64 - ic;
+                mcd = mcd.min(ic);
             }
-            mcd = mcd.min(inside_connectivity);
-        }
-        if mcd == (g.m() + 1) as u64 {
-            mcd = 0;
-        }
-        m /= 2;
-        n_s.push(nodes.len() as u32);
+            if mcd == (g.m() + 1) as u64 {
+                mcd = 0;
+            }
+            m /= 2;
+            (nodes.len(), m, c, mcd)
+        })
+        .collect();
+    let mut n_s = Vec::with_capacity(data.len());
+    let mut m_s = Vec::with_capacity(data.len());
+    let mut c_s = Vec::with_capacity(data.len());
+    let mut mcd_s = Vec::with_capacity(data.len());
+    for (n, m, c, mcd) in data {
+        n_s.push(n);
         m_s.push(m);
         c_s.push(c);
         mcd_s.push(mcd);
@@ -148,6 +158,7 @@ pub fn read_assignment_series(
         .groupby(["cid"])
         .agg([col("nid").list()])
         .collect()?;
+    // println!("collected");
     if mode == SingletonMode::Ignore {
         let mask: Series = df
             .column("nid")?
@@ -159,6 +170,7 @@ pub fn read_assignment_series(
     }
     let mut nodes = node_list_to_bitmaps(g, df.column("nid")?)?;
     nodes.rename("nodes");
+    // println!("nodes");
     let mut df = df!("label" => df.column("cid")?, "nodes" => nodes)?;
     if mode == SingletonMode::AutoPopulate {
         let covered_nodes = iter_roaring(df.column("nodes")?).collect_vec().union();
@@ -236,7 +248,7 @@ pub fn node_list_to_bitmaps(g: &Graph, list: &Series) -> anyhow::Result<Series> 
     let g = &g.data.graph;
     let as_list = list.list()?;
     let sets: Vec<EfficientSet> = as_list
-        .into_iter()
+        .par_iter()
         .map(|e| {
             e.map_or_else(
                 || RoaringBitmap::new().into(),
@@ -370,7 +382,10 @@ impl Graph {
     fn new(filepath: &str) -> Self {
         let raw_data =
             EnrichedGraph::from_graph(aocluster::base::Graph::parse_from_file(filepath).unwrap());
-        Graph {data:Arc::new(raw_data), cc: OnceCell::new()}
+        Graph {
+            data: Arc::new(raw_data),
+            cc: OnceCell::new(),
+        }
     }
 
     #[args(verbose = false)]
@@ -475,7 +490,12 @@ impl Graph {
     }
 
     fn largest_component(&self) -> u32 {
-        self.get_cc_labels().num_nodes.iter().max().copied().unwrap() as u32
+        self.get_cc_labels()
+            .num_nodes
+            .iter()
+            .max()
+            .copied()
+            .unwrap() as u32
     }
 }
 
@@ -691,8 +711,6 @@ impl SummarizedDistributionWrapper {
     }
 }
 
-
-
 // pub fn union_bitmaps<E: AsRef<[Expr]>>(exprs: E) -> Expr {
 //     let exprs = exprs.as_ref().to_vec();
 
@@ -755,13 +773,15 @@ pub fn rust_nodeset_to_list(g: &Graph, series: &Series) -> anyhow::Result<Series
     let mut ans = vec![];
     let g = &g.data.graph;
     for bm in iter_roaring(series) {
-        let bm : RoaringBitmap = bm.try_into()?;
-        let s = bm.iter().map(|it| g.name_set.rev[it as usize] as u32).collect::<Series>();
+        let bm: RoaringBitmap = bm.try_into()?;
+        let s = bm
+            .iter()
+            .map(|it| g.name_set.rev[it as usize] as u32)
+            .collect::<Series>();
         ans.push(s);
     }
     Ok(Series::new("nodes_list", ans))
 }
-
 
 pub fn rust_popcnt(series: &Series) -> Series {
     iter_roaring(series)
@@ -836,7 +856,6 @@ pub fn py_nodeset_to_list(g: &Graph, series: &PyAny) -> PyResult<PyObject> {
     let out = rust_nodeset_to_list(&g, &series).unwrap();
     ffi::rust_series_to_py_series(&out)
 }
-
 
 #[pymethods]
 impl ClusteringSubset {
