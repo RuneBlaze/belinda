@@ -4,10 +4,11 @@ use aocluster::{
         ClusteringHandle, ClusteringSource, EnrichedGraph, GraphStats, RichCluster, RichClustering,
     },
     utils::{calc_cpm_resolution, calc_modularity_resolution},
-    DefaultGraph,
+    DefaultGraph, alg::{CCLabels, self},
 };
+use arrow::bitmap::Bitmap;
 use itertools::Itertools;
-use polars::df;
+use polars::{df, export::once_cell::sync::OnceCell};
 use polars::prelude::*;
 
 use pyo3::{
@@ -15,7 +16,7 @@ use pyo3::{
     types::{PyDict, PyList},
 };
 use roaring::{MultiOps, RoaringBitmap, RoaringTreemap};
-use std::{collections::HashMap, sync::Arc, path::Path, io::BufReader};
+use std::{collections::HashMap, io::BufReader, path::Path, sync::Arc};
 
 use crate::{
     df::{
@@ -41,10 +42,7 @@ pub enum SingletonMode {
     AsIs,
 }
 
-pub fn populate_clusdf(
-    g: &Graph,
-    df: &mut DataFrame,
-) -> anyhow::Result<()> {
+pub fn populate_clusdf(g: &Graph, df: &mut DataFrame) -> anyhow::Result<()> {
     let g = &g.data.graph;
     let mut n_s = vec![];
     let mut m_s = vec![];
@@ -76,7 +74,7 @@ pub fn populate_clusdf(
         m_s.push(m);
         c_s.push(c);
         mcd_s.push(mcd);
-    };
+    }
     df.with_column(Series::new("n", n_s))?;
     df.with_column(Series::new("m", m_s))?;
     df.with_column(Series::new("c", c_s))?;
@@ -84,10 +82,17 @@ pub fn populate_clusdf(
     Ok(())
 }
 
-pub fn read_json<P: AsRef<Path>>(g: &Graph, filepath: P, mode: SingletonMode) -> anyhow::Result<DataFrame> {
+pub fn read_json<P: AsRef<Path>>(
+    g: &Graph,
+    filepath: P,
+    mode: SingletonMode,
+) -> anyhow::Result<DataFrame> {
     let mut file = std::fs::File::open(filepath)?;
     let mut df = JsonLineReader::new(&mut file).finish()?;
-    df.with_column(df.column("nodes")?.cast(&DataType::List(Box::new(DataType::UInt32)))?)?;
+    df.with_column(
+        df.column("nodes")?
+            .cast(&DataType::List(Box::new(DataType::UInt32)))?,
+    )?;
     let mut nodes = node_list_to_bitmaps(g, df.column("nodes")?)?;
     nodes.rename("nodes");
     df.with_column(nodes)?;
@@ -96,7 +101,11 @@ pub fn read_json<P: AsRef<Path>>(g: &Graph, filepath: P, mode: SingletonMode) ->
     Ok(df)
 }
 
-pub fn post_read_singleton(g: &Graph, mut df: DataFrame, mode: SingletonMode) -> anyhow::Result<DataFrame> {
+pub fn post_read_singleton(
+    g: &Graph,
+    mut df: DataFrame,
+    mode: SingletonMode,
+) -> anyhow::Result<DataFrame> {
     if mode == SingletonMode::Ignore {
         let mask: Series = df
             .column("nodes")?
@@ -173,18 +182,32 @@ pub fn read_assignment_series(
     Ok(df)
 }
 
-pub fn read_assignment_file(g: &Graph, filepath: &str, sep: u8, mode: SingletonMode) -> anyhow::Result<DataFrame> {
+pub fn read_assignment_file(
+    g: &Graph,
+    filepath: &str,
+    sep: u8,
+    mode: SingletonMode,
+) -> anyhow::Result<DataFrame> {
     let df = CsvReader::from_path(filepath)?
-            .has_header(false)
-            .with_delimiter(sep)
-            .finish()?;
+        .has_header(false)
+        .with_delimiter(sep)
+        .finish()?;
     let nid = df.column("column_1")?;
     let cid = df.column("column_2")?;
     read_assignment_series(g, nid, cid, mode)
 }
 
-#[pyfunction(name = "read_assignment", mode = "SingletonMode::AutoPopulate", sep = "b'\\t'")]
-pub fn py_read_assignment_file(g: &Graph, filepath: &str, sep: u8, mode: SingletonMode) -> PyResult<PyObject> {
+#[pyfunction(
+    name = "read_assignment",
+    mode = "SingletonMode::AutoPopulate",
+    sep = "b'\\t'"
+)]
+pub fn py_read_assignment_file(
+    g: &Graph,
+    filepath: &str,
+    sep: u8,
+    mode: SingletonMode,
+) -> PyResult<PyObject> {
     let mut df = read_assignment_file(g, filepath, sep, mode).unwrap();
     let translated = translate_df(&mut df)?;
     Ok(translated)
@@ -267,6 +290,7 @@ pub fn node_list_to_bitmaps(g: &Graph, list: &Series) -> anyhow::Result<Series> 
 #[derive(Clone)]
 pub struct Graph {
     data: Arc<EnrichedGraph>,
+    cc: OnceCell<CCLabels>,
 }
 
 pub trait ClusDataFrame {
@@ -277,7 +301,6 @@ pub trait ClusDataFrame {
     fn covered_edges(&self, graph: &DefaultGraph) -> anyhow::Result<Series>;
     fn can_overlap(&self, graph: &DefaultGraph) -> bool;
 }
-
 
 impl ClusDataFrame for DataFrame {
     fn modularity(&self, graph: &Graph, resolution: f64) -> anyhow::Result<Series> {
@@ -335,53 +358,80 @@ impl ClusDataFrame for DataFrame {
     }
 }
 
+impl Graph {
+    pub fn get_cc_labels(&self) -> &CCLabels {
+        self.cc.get_or_init(|| alg::cc_labeling(&self.data.graph))
+    }
+}
+
 #[pymethods]
 impl Graph {
     #[new]
     fn new(filepath: &str) -> Self {
         let raw_data =
             EnrichedGraph::from_graph(aocluster::base::Graph::parse_from_file(filepath).unwrap());
-        Graph {
-            data: Arc::new(raw_data),
-        }
+        Graph {data:Arc::new(raw_data), cc: OnceCell::new()}
     }
 
-    #[args(verbose=false)]
+    #[args(verbose = false)]
     fn nodes(&self, clus: Option<&PyAny>, verbose: bool) -> PyResult<PyObject> {
         let g = &self.data.graph;
-        let nodes = (0..self.n()).map(|it| g.name_set.rev[it as usize] as u32).collect_vec();
-        let degrees = (0..self.n()).map(|it| g.nodes[it as usize].degree() as u32).collect_vec();
+        let nodes = (0..self.n())
+            .map(|it| g.name_set.rev[it as usize] as u32)
+            .collect_vec();
+        let degrees = (0..self.n())
+            .map(|it| g.nodes[it as usize].degree() as u32)
+            .collect_vec();
         let mut df = df!(
             "node" => nodes,
             "degree" => degrees,
-        ).unwrap();
+        )
+        .unwrap();
         if verbose {
-            let adj = (0..self.n()).map(|it| g.nodes[it as usize].edges.iter().map(|it| g.name_set.rev[*it] as u32).collect::<Series>()).collect_vec();
+            let adj = (0..self.n())
+                .map(|it| {
+                    g.nodes[it as usize]
+                        .edges
+                        .iter()
+                        .map(|it| g.name_set.rev[*it] as u32)
+                        .collect::<Series>()
+                })
+                .collect_vec();
             df.with_column(Series::new("adj", adj)).unwrap();
         }
         if let Some(clus) = clus {
-            let label = ffi::py_series_to_rust_series(clus.call_method1("get_column", ("label", ))?)?;
+            let label =
+                ffi::py_series_to_rust_series(clus.call_method1("get_column", ("label",))?)?;
             let label_t = label.dtype();
-            let mut labels_u32 : Vec<Vec<Option<u32>>> = vec![vec![]; self.n() as usize];
-            let mut labels_str : Vec<Vec<String>> = vec![vec![]; self.n() as usize];
-            let nodes = ffi::py_series_to_rust_series(clus.call_method1("get_column", ("nodes", ))?)?;
+            let mut labels_u32: Vec<Vec<Option<u32>>> = vec![vec![]; self.n() as usize];
+            let mut labels_str: Vec<Vec<String>> = vec![vec![]; self.n() as usize];
+            let nodes =
+                ffi::py_series_to_rust_series(clus.call_method1("get_column", ("nodes",))?)?;
             if label_t != &DataType::Utf8 {
-                for (ns, label) in iter_roaring(&nodes).zip(label.cast(&DataType::UInt32).unwrap().u32().unwrap()) {
-                    let ns : RoaringBitmap = ns.try_into().unwrap();
+                for (ns, label) in
+                    iter_roaring(&nodes).zip(label.cast(&DataType::UInt32).unwrap().u32().unwrap())
+                {
+                    let ns: RoaringBitmap = ns.try_into().unwrap();
                     for node in ns.into_iter() {
                         labels_u32[node as usize].push(label);
                     }
                 }
             } else {
                 for (ns, label) in iter_roaring(&nodes).zip(label.utf8().unwrap()) {
-                    let ns : RoaringBitmap = ns.try_into().unwrap();
+                    let ns: RoaringBitmap = ns.try_into().unwrap();
                     for node in ns.into_iter() {
                         labels_str[node as usize].push(label.unwrap_or_default().to_string());
                     }
                 }
             }
-            let labels_u32 = labels_u32.into_iter().map(|it| it.into_iter().collect::<Series>()).collect_vec();
-            let labels_str = labels_str.into_iter().map(|it| it.into_iter().collect::<Series>()).collect_vec();
+            let labels_u32 = labels_u32
+                .into_iter()
+                .map(|it| it.into_iter().collect::<Series>())
+                .collect_vec();
+            let labels_str = labels_str
+                .into_iter()
+                .map(|it| it.into_iter().collect::<Series>())
+                .collect_vec();
             if label_t != &DataType::Utf8 {
                 df.with_column(Series::new("labels", labels_u32)).unwrap();
             } else {
@@ -418,6 +468,14 @@ impl Graph {
             self.data.graph.n(),
             self.data.graph.m()
         ))
+    }
+
+    fn num_components(&self) -> u32 {
+        self.get_cc_labels().num_nodes.len() as u32
+    }
+
+    fn largest_component(&self) -> u32 {
+        self.get_cc_labels().num_nodes.iter().max().copied().unwrap() as u32
     }
 }
 
@@ -633,6 +691,8 @@ impl SummarizedDistributionWrapper {
     }
 }
 
+
+
 // pub fn union_bitmaps<E: AsRef<[Expr]>>(exprs: E) -> Expr {
 //     let exprs = exprs.as_ref().to_vec();
 
@@ -667,6 +727,41 @@ impl SummarizedDistributionWrapper {
 //         },
 //     }
 // }
+
+pub fn rust_label_cc(g: &Graph, series: &Series) -> anyhow::Result<Series> {
+    let labels = &g.get_cc_labels().labels;
+    let g = &g.data.graph;
+    let mut ans = vec![];
+    for u in series.u32().into_iter() {
+        for v in u {
+            ans.push(v.map(|v| labels[g.retrieve(v as usize).unwrap() as usize]));
+        }
+    }
+    Ok(Series::new("cc", ans))
+}
+
+pub fn rust_label_cc_size(g: &Graph, series: &Series) -> anyhow::Result<Series> {
+    let num_nodes = &g.get_cc_labels().num_nodes;
+    let mut ans = vec![];
+    for u in series.u32().into_iter() {
+        for v in u {
+            ans.push(v.map(|v| num_nodes[v as usize]));
+        }
+    }
+    Ok(Series::new("cc_size", ans))
+}
+
+pub fn rust_nodeset_to_list(g: &Graph, series: &Series) -> anyhow::Result<Series> {
+    let mut ans = vec![];
+    let g = &g.data.graph;
+    for bm in iter_roaring(series) {
+        let bm : RoaringBitmap = bm.try_into()?;
+        let s = bm.iter().map(|it| g.name_set.rev[it as usize] as u32).collect::<Series>();
+        ans.push(s);
+    }
+    Ok(Series::new("nodes_list", ans))
+}
+
 
 pub fn rust_popcnt(series: &Series) -> Series {
     iter_roaring(series)
@@ -720,6 +815,28 @@ pub fn py_bitmap_union(series: &PyAny) -> PyResult<PyObject> {
     let out = rust_bitmap_union(&series);
     ffi::rust_series_to_py_series(&out)
 }
+
+#[pyfunction(name = "cc_labels")]
+pub fn py_label_cc(g: &Graph, series: &PyAny) -> PyResult<PyObject> {
+    let series = ffi::py_series_to_rust_series(series)?;
+    let out = rust_label_cc(&g, &series).unwrap();
+    ffi::rust_series_to_py_series(&out)
+}
+
+#[pyfunction(name = "cc_size")]
+pub fn py_label_cc_size(g: &Graph, series: &PyAny) -> PyResult<PyObject> {
+    let series = ffi::py_series_to_rust_series(series)?;
+    let out = rust_label_cc_size(&g, &series).unwrap();
+    ffi::rust_series_to_py_series(&out)
+}
+
+#[pyfunction(name = "nodeset_to_list")]
+pub fn py_nodeset_to_list(g: &Graph, series: &PyAny) -> PyResult<PyObject> {
+    let series = ffi::py_series_to_rust_series(series)?;
+    let out = rust_nodeset_to_list(&g, &series).unwrap();
+    ffi::rust_series_to_py_series(&out)
+}
+
 
 #[pymethods]
 impl ClusteringSubset {
