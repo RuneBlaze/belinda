@@ -120,11 +120,8 @@ pub fn post_read_singleton(
     mode: SingletonMode,
 ) -> anyhow::Result<DataFrame> {
     if mode == SingletonMode::Ignore {
-        let mask: Series = df
-            .column("nodes")?
-            .list()?
-            .into_iter()
-            .map(|f| f.map_or(false, |e| e.len() > 1))
+        let mask: Series = iter_roaring(df.column("nodes")?)
+            .map(|it| it.len() > 1)
             .collect();
         df = df.filter(mask.bool()?)?;
     }
