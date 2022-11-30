@@ -53,8 +53,11 @@ pub fn populate_clusdf(g: &Graph, df: &mut DataFrame) -> anyhow::Result<()> {
     let bitmaps: Vec<RoaringBitmap> = iter_roaring(df.column("nodes")?)
         .map(|n| n.try_into().unwrap())
         .collect_vec();
-    let edges_bitmaps = g.nodes.iter().map(|n| RoaringBitmap::from_sorted_iter(n.edges.iter().map(|it| *it as u32)).unwrap()).collect_vec();
-    let n = bitmaps.len();
+    let edges_bitmaps = g
+        .nodes
+        .iter()
+        .map(|n| RoaringBitmap::from_sorted_iter(n.edges.iter().map(|it| *it as u32)).unwrap())
+        .collect_vec();
     let data: Vec<_> = bitmaps
         .into_par_iter()
         .map(|nodes| {
@@ -140,7 +143,23 @@ pub fn post_read_singleton(
         }
         let new_labels =
             Series::from_any_values_and_dtype("label", &new_labels, df.column("label")?.dtype())?;
-        let extend_df = df!("label" => new_labels, "nodes" => new_nodes.to_series())?;
+        let k = new_labels.len();
+        let mut extend_df = df!("label" => new_labels, "nodes" => new_nodes.to_series())?;
+        df.get_column_names_owned().iter().for_each(|col: &String| {
+            if col != "label" && col != "nodes" {
+                let mut null_filled = Vec::with_capacity(k);
+                for i in 0..k {
+                    null_filled.push(AnyValue::Null);
+                }
+                let mut s = Series::from_any_values_and_dtype(
+                    &col,
+                    &null_filled,
+                    df.column(&col).unwrap().dtype(),
+                )
+                .unwrap();
+                extend_df.with_column(s).unwrap();
+            }
+        });
         df.extend(&extend_df)?;
     }
     Ok(df)
