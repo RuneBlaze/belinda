@@ -42,7 +42,7 @@ def edge_coverage(self, overlap=False):
     a = "edge_coverage"
     if overlap:
         return (
-            self.intra_edges(pl.col("nodes")).set.union().set.popcnt() / self.m
+            pl.col("nodes").map(lambda x: self.covered_edges_count(x)) / self.m
         ).alias(a)
     else:
         return (pl.col("m").sum() / self.m).alias(a)

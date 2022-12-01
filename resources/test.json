@@ -1,2 +1,1 @@
-{"label": "hi", "nodes": [0], "cut_size": 5}
-{"label": "byte", "nodes": [1], "cut_size": 5}
+{"label": "hi", "nodes": [0,1], "cut_size": 5}

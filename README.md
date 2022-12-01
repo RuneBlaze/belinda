@@ -1,6 +1,4 @@
-belinda^[1]
+belinda
 =============
 
-Data analysis library for large scale clusterings and graphs for Python. The goal is to enable robust and fast data science on clusterings by providing basic primitives in Python.
-
-[1]: "Listen. People are all we’ve got. People are all we’ve got, so grab the night by its nipples and go and flirt with someone." -- Belinda (Kristin Scott Thomas), *Fleabag*
+Data science library add-on for `polars` specialized for **clustering analysis** for large-scale graphs, with some graph analytics sprinkled in.

@@ -1,4 +1,3 @@
-use ahash::{AHashMap, AHashSet};
 use aocluster::{
     alg::{self, CCLabels},
     aoc::rayon::{
@@ -11,8 +10,6 @@ use aocluster::{
     utils::{calc_cpm_resolution, calc_modularity_resolution},
     DefaultGraph,
 };
-use arrow::bitmap::Bitmap;
-use indicatif::ParallelProgressIterator;
 use itertools::Itertools;
 use polars::prelude::*;
 use polars::{df, export::once_cell::sync::OnceCell};
@@ -22,13 +19,10 @@ use pyo3::{
     types::{PyDict, PyList},
 };
 use roaring::{MultiOps, RoaringBitmap, RoaringTreemap};
-use std::{collections::HashMap, io::BufReader, path::Path, sync::Arc};
+use std::{collections::HashMap, path::Path, sync::Arc};
 
 use crate::{
-    df::{
-        build_series_from_bitmap, build_series_from_sets, iter_roaring, EfficientSet,
-        VecEfficientSet,
-    },
+    df::{build_series_from_sets, iter_roaring, EfficientSet, VecEfficientSet},
     ffi::{self, translate_df},
 };
 
@@ -40,7 +34,7 @@ pub fn set_nthreads(nthreads: usize) {
         .unwrap();
 }
 
-#[derive(Debug, Clone, PartialEq, Hash)]
+#[derive(Debug, Clone, PartialEq, Eq, Hash)]
 #[pyclass]
 pub enum SingletonMode {
     AutoPopulate,
@@ -145,13 +139,13 @@ pub fn post_read_singleton(
         df.get_column_names_owned().iter().for_each(|col: &String| {
             if col != "label" && col != "nodes" {
                 let mut null_filled = Vec::with_capacity(k);
-                for i in 0..k {
+                for _i in 0..k {
                     null_filled.push(AnyValue::Null);
                 }
-                let mut s = Series::from_any_values_and_dtype(
-                    &col,
+                let s = Series::from_any_values_and_dtype(
+                    col,
                     &null_filled,
-                    df.column(&col).unwrap().dtype(),
+                    df.column(col).unwrap().dtype(),
                 )
                 .unwrap();
                 extend_df.with_column(s).unwrap();
@@ -174,7 +168,6 @@ pub fn read_assignment_series(
         .groupby(["cid"])
         .agg([col("nid").list()])
         .collect()?;
-    // println!("collected");
     if mode == SingletonMode::Ignore {
         let mask: Series = df
             .column("nid")?
@@ -186,7 +179,6 @@ pub fn read_assignment_series(
     }
     let mut nodes = node_list_to_bitmaps(g, df.column("nid")?)?;
     nodes.rename("nodes");
-    // println!("nodes");
     let mut df = df!("label" => df.column("cid")?, "nodes" => nodes)?;
     if mode == SingletonMode::AutoPopulate {
         let covered_nodes = iter_roaring(df.column("nodes")?).collect_vec().union();
@@ -251,13 +243,13 @@ pub fn py_from_assignments(
     let nodes = ffi::py_series_to_rust_series(nodes)?;
     let cids = ffi::py_series_to_rust_series(cids)?;
     let mut df = read_assignment_series(g, &nodes, &cids, mode).unwrap();
-    Ok(translate_df(&mut df)?)
+    translate_df(&mut df)
 }
 
 #[pyfunction(name = "read_json", mode = "SingletonMode::AutoPopulate")]
 pub fn py_read_json(g: &Graph, filepath: &str, mode: SingletonMode) -> PyResult<PyObject> {
     let mut df = read_json(g, filepath, mode).unwrap();
-    Ok(translate_df(&mut df)?)
+    translate_df(&mut df)
 }
 
 pub fn node_list_to_bitmaps(g: &Graph, list: &Series) -> anyhow::Result<Series> {
@@ -271,12 +263,8 @@ pub fn node_list_to_bitmaps(g: &Graph, list: &Series) -> anyhow::Result<Series> 
                 |series| {
                     let mut seen_nonexistent = false;
                     let mut bitmap = RoaringBitmap::new();
-                    series
-                        .u32()
-                        .unwrap()
-                        .into_iter()
-                        .filter_map(|x| x)
-                        .for_each(|x| match g.retrieve(x as usize) {
+                    series.u32().unwrap().into_iter().flatten().for_each(|x| {
+                        match g.retrieve(x as usize) {
                             Some(internal_id) => {
                                 bitmap.insert(internal_id as u32);
                             }
@@ -286,7 +274,8 @@ pub fn node_list_to_bitmaps(g: &Graph, list: &Series) -> anyhow::Result<Series> 
                                 }
                                 seen_nonexistent = true;
                             }
-                        });
+                        }
+                    });
                     bitmap.into()
                 },
             )
@@ -469,7 +458,7 @@ impl Graph {
                 df.with_column(Series::new("labels", labels_str)).unwrap();
             }
         }
-        Ok(translate_df(&mut df)?)
+        translate_df(&mut df)
     }
 
     fn covered_edges(&self, n: &PyAny) -> PyResult<PyObject> {
@@ -481,6 +470,17 @@ impl Graph {
             .map(EfficientSet::BigSet)
             .collect::<Vec<_>>();
         ffi::rust_series_to_py_series(&build_series_from_sets(nodesets))
+    }
+
+    fn covered_edges_count(&self, n: &PyAny) -> PyResult<u64> {
+        let series = ffi::py_series_to_rust_series(n)?;
+        let g = &self.data;
+        let edgesets = iter_roaring(&series)
+            .map(|it| it.try_into().unwrap())
+            .map(|it| edgeset(g, &it))
+            .map(EfficientSet::BigSet)
+            .collect::<Vec<_>>();
+        Ok(edgesets.union().len() as u64)
     }
 
     #[getter]
@@ -855,21 +855,21 @@ pub fn py_bitmap_union(series: &PyAny) -> PyResult<PyObject> {
 #[pyfunction(name = "cc_labels")]
 pub fn py_label_cc(g: &Graph, series: &PyAny) -> PyResult<PyObject> {
     let series = ffi::py_series_to_rust_series(series)?;
-    let out = rust_label_cc(&g, &series).unwrap();
+    let out = rust_label_cc(g, &series).unwrap();
     ffi::rust_series_to_py_series(&out)
 }
 
 #[pyfunction(name = "cc_size")]
 pub fn py_label_cc_size(g: &Graph, series: &PyAny) -> PyResult<PyObject> {
     let series = ffi::py_series_to_rust_series(series)?;
-    let out = rust_label_cc_size(&g, &series).unwrap();
+    let out = rust_label_cc_size(g, &series).unwrap();
     ffi::rust_series_to_py_series(&out)
 }
 
 #[pyfunction(name = "nodeset_to_list")]
 pub fn py_nodeset_to_list(g: &Graph, series: &PyAny) -> PyResult<PyObject> {
     let series = ffi::py_series_to_rust_series(series)?;
-    let out = rust_nodeset_to_list(&g, &series).unwrap();
+    let out = rust_nodeset_to_list(g, &series).unwrap();
     ffi::rust_series_to_py_series(&out)
 }
 
