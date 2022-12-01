@@ -2,7 +2,9 @@ use aocluster::{
     alg::{self, CCLabels},
     aoc::rayon::{
         self,
-        prelude::{IndexedParallelIterator, IntoParallelIterator, ParallelIterator},
+        prelude::{
+            IndexedParallelIterator, IntoParallelIterator, ParallelBridge, ParallelIterator,
+        },
     },
     belinda::{
         ClusteringHandle, ClusteringSource, EnrichedGraph, GraphStats, RichCluster, RichClustering,
@@ -477,8 +479,8 @@ impl Graph {
         let g = &self.data;
         let edgesets = iter_roaring(&series)
             .map(|it| it.try_into().unwrap())
+            .par_bridge()
             .map(|it| edgeset(g, &it))
-            .map(EfficientSet::BigSet)
             .collect::<Vec<_>>();
         Ok(edgesets.union().len() as u64)
     }
