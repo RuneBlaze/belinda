@@ -286,25 +286,6 @@ pub fn node_list_to_bitmaps(g: &Graph, list: &Series) -> anyhow::Result<Series> 
     Ok(sets.to_series())
 }
 
-// #[pyfunction(with_singletons = "true")]
-// pub fn read_clusters(
-//     py: Python,
-//     g: &Graph,
-//     clus_path: &str,
-//     with_singletons: bool,
-// ) -> PyResult<PyObject> {
-//     let clus = Clustering::new(py, g, clus_path, None)?;
-//     let mut df = df!(
-//         "label" => clus.data.clusters.keys().copied().collect_vec(),
-//         "n" => clus.data.clusters.values().map(|v| v.n as u32).collect_vec(),
-//         "m" => clus.data.clusters.values().map(|v| v.m).collect_vec(),
-//         "c" => clus.data.clusters.values().map(|v| v.c).collect_vec(),
-//         "mcd" => clus.data.clusters.values().map(|v| v.mcd).collect_vec(),
-//         "nodes" => build_series_from_bitmap(clus.data.clusters.values().map(|v| v.nodes.clone()).collect_vec()),
-//     ).unwrap();
-//     translate_df(&mut df)
-// }
-
 #[pyclass]
 #[derive(Clone)]
 pub struct Graph {
