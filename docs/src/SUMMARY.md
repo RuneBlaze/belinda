@@ -7,3 +7,4 @@
   - [Graph Data Frames](./graph_data_frames.md)
 - [Cookbook](./cookbook.md)
   - [Conversion to Parquet](./conversion_to_parquet.md)
+  - [Filtering out Clusters](./filtering_out_clusters.md)
