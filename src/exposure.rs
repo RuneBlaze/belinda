@@ -7,10 +7,9 @@ use aocluster::{
         },
     },
     belinda::{
-        ClusteringHandle, ClusteringSource, EnrichedGraph, GraphStats, RichCluster, RichClustering,
+        EnrichedGraph,
     },
     utils::{calc_cpm_resolution, calc_modularity_resolution},
-    DefaultGraph,
 };
 use itertools::Itertools;
 use polars::prelude::*;
@@ -18,10 +17,9 @@ use polars::{df, export::once_cell::sync::OnceCell};
 
 use pyo3::{
     prelude::*,
-    types::{PyDict, PyList},
 };
 use roaring::{MultiOps, RoaringBitmap, RoaringTreemap};
-use std::{collections::HashMap, path::Path, sync::Arc};
+use std::{path::Path, sync::Arc};
 
 use crate::{
     df::{build_series_from_sets, iter_roaring, EfficientSet, VecEfficientSet},
@@ -105,25 +103,29 @@ pub fn read_json<P: AsRef<Path>>(
     let mut nodes = node_list_to_bitmaps(g, df.column("nodes")?)?;
     nodes.rename("nodes");
     df.with_column(nodes)?;
-    df = post_read_singleton(g, df, mode)?;
+    df = postprocess_singleton_mode(g, df, mode)?;
     populate_clusdf(g, &mut df)?;
     Ok(df)
 }
 
-pub fn post_read_singleton(
+/// Postprocesses a data frame with the singleton mode specified
+pub fn postprocess_singleton_mode(
     g: &Graph,
     mut df: DataFrame,
     mode: SingletonMode,
 ) -> anyhow::Result<DataFrame> {
-    if mode == SingletonMode::Ignore {
-        let mask: Series = iter_roaring(df.column("nodes")?)
-            .map(|it| it.len() > 1)
+    let lb = if mode == SingletonMode::Ignore {
+        2
+    } else {
+        1
+    };
+    let mask: Series = iter_roaring(df.column("nodes")?)
+            .map(|it| it.len() >= lb)
             .collect();
-        df = df.filter(mask.bool()?)?;
-    }
+    df = df.filter(mask.bool()?)?;
     if mode == SingletonMode::AutoPopulate {
-        let covered_nodes = iter_roaring(df.column("nodes")?).collect_vec().union();
-        let covered_nodes: RoaringBitmap = covered_nodes.try_into()?;
+        let covered_nodes: RoaringBitmap = iter_roaring(df.column("nodes")?).collect_vec().union().try_into()?;
+        // create two columns, a column of labels and a column of nodes
         let mut new_labels = vec![];
         let mut new_nodes: Vec<EfficientSet> = vec![];
         if covered_nodes.len() < g.n().into() {
@@ -170,36 +172,22 @@ pub fn read_membership_series(
         .groupby(["cid"])
         .agg([col("nid").list()])
         .collect()?;
-    if mode == SingletonMode::Ignore {
-        let mask: Series = df
+    let lb = if mode == SingletonMode::Ignore {
+        2
+    } else {
+        1
+    };
+    let mask: Series = df
             .column("nid")?
             .list()?
             .into_iter()
-            .map(|f| f.map_or(false, |e| e.len() > 1))
+            .map(|f| f.map_or(false, |e| e.len() >= lb))
             .collect();
-        df = df.filter(mask.bool()?)?;
-    }
+    df = df.filter(mask.bool()?)?;
     let mut nodes = node_list_to_bitmaps(g, df.column("nid")?)?;
     nodes.rename("nodes");
     let mut df = df!("label" => df.column("cid")?, "nodes" => nodes)?;
-    if mode == SingletonMode::AutoPopulate {
-        let covered_nodes = iter_roaring(df.column("nodes")?).collect_vec().union();
-        let covered_nodes: RoaringBitmap = covered_nodes.try_into()?;
-        let mut new_labels = vec![];
-        let mut new_nodes: Vec<EfficientSet> = vec![];
-        if covered_nodes.len() < g.n().into() {
-            for i in 0..g.n() {
-                if !covered_nodes.contains(i) {
-                    new_labels.push(AnyValue::Null);
-                    new_nodes.push(RoaringBitmap::from_iter([i]).into())
-                }
-            }
-        }
-        let new_labels =
-            Series::from_any_values_and_dtype("label", &new_labels, df.column("label")?.dtype())?;
-        let extend_df = df!("label" => new_labels, "nodes" => new_nodes.to_series())?;
-        df.extend(&extend_df)?;
-    }
+    df = postprocess_singleton_mode(g, df, mode)?;
     populate_clusdf(g, &mut df)?;
     Ok(df)
 }

@@ -71,7 +71,7 @@ def one_liner(graph, clustering, overlap=False, statistics=[]):
     )
 
 
-def write_assignment(graph, clustering, filepath):
+def write_membership(graph, clustering, filepath):
     df = graph.nodes(clustering)
     with open(filepath, "w+") as fh:
         for n, lbls in zip(df.get_column("node"), df.get_column("labels")):

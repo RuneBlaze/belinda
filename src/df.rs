@@ -1,7 +1,6 @@
 use polars::export::arrow::array::{Array, BinaryArray, MutableBinaryArray};
 use polars::prelude::PolarsError;
-use polars::prelude::*;
-use polars::{prelude::NamedFrom, series::Series};
+use polars::{series::Series};
 use roaring::{MultiOps, RoaringBitmap, RoaringTreemap};
 
 pub type ArrayRef = Box<dyn Array>;

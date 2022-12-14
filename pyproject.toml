@@ -12,6 +12,5 @@ dependencies = ["polars>=0.15.1", "pyarrow>=10.0.1"]
 classifiers = [
     "Programming Language :: Rust",
     "Programming Language :: Python :: Implementation :: CPython",
-    "Programming Language :: Python :: Implementation :: PyPy",
 ]
 
