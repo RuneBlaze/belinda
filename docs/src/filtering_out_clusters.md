@@ -4,12 +4,17 @@
 import belinda as bl
 import polars as pl
 
-g = bl.Graph("com-amazon.ungraph.txt") # the edgelist graph
-c = bl.read_membership(g, "com-amazon.leiden.txt") # the membership as given by Leiden
-c_wo_trees = c.filter(pl.col('n') != pl.col('m') + 1) # trees: those clusters with n = m + 1
-bl.write_membership(g, c_wo_trees, "com-amazon.leiden.wotrees.txt") # write the new membership
+# the edgelist graph
+g = bl.Graph("com-amazon.ungraph.txt")
+# the membership as given by Leiden
+c = bl.read_membership(g, "com-amazon.leiden.txt")
+c_wo_trees = c.filter(pl.col('n') != pl.col('m') + 1)
+# `c_wo_trees` is a new set of clusters without "trees", clusters with n = m + 1
 
-c_largish = c.filter(pl.col('n') > 10) # clusters with more than 10 nodes
+# write the new membership
+bl.write_membership(g, c_wo_trees, "com-amazon.leiden.wotrees.txt")
+
+c_largish = c.filter(pl.col('n') > 10) # only take clusters with more than 10 nodes
 bl.write_membership(g, c_largish, "com-amazon.leiden.largish.txt")
 ```
 
