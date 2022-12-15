@@ -145,3 +145,4 @@ shape: (1, 1)
 ```
 
 Although we don't know how to interpret the optimization score (after all, it is just a score), it is good to
+know that it can be derived in a composable way.

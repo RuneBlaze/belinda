@@ -58,9 +58,10 @@ def summary_statistics(graph, clustering, overlap=False, statistics=[]):
     return verbose_statistics(graph, clustering, overlap, statistics).describe()
 
 
-def one_liner(graph, clustering, overlap=False, statistics=[]):
+def peek(graph, clustering, overlap=False, statistics=[pl.col('n')]):
     return clustering.select(
         [
+            pl.col('nodes').count().alias('n_clusters'),
             graph.node_coverage(overlap),
             graph.edge_coverage(overlap),
             *[
@@ -78,6 +79,9 @@ def write_membership(graph, clustering, filepath):
             for l in lbls:
                 fh.write(f"{n}\t{l}\n")
 
+def write_json(graph, clustering, filepath):
+    clus = clustering.with_column(pl.col('nodes').set.flatten(graph).alias('nodes'))
+    clus.write_ndjson(filepath)
 
 setattr(Graph, "modularity", modularity)
 setattr(Graph, "cpm", lambda self, r: cpm(r))
@@ -106,14 +110,22 @@ setattr(Graph, "summary", lambda self: pl.select([
 
 @pl.api.register_expr_namespace("set")
 class EfficientSet:
+    """Efficient set operations (expression extensions) for polars."""
     def __init__(self, expr: pl.Expr):
+        """Initialize the namespace."""
         self._expr = expr
 
     def popcnt(self):
+        """Count the number of elements in the set."""
         return self._expr.map(popcnt)
 
     def len(self):
+        """Count the number of elements in the set."""
         return self._expr.map(popcnt)
 
     def union(self):
+        """Compute the union of all sets in the series."""
         return self._expr.map(lambda x: union(x))
+
+    def flatten(self, g):
+        return self._expr.map(lambda x: nodeset_to_list(g, x))

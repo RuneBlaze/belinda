@@ -97,7 +97,7 @@ shape: (1, 1)
 └──────────────────┘
 ```
 
-## Loading Clustering
+## Starting with Belinda
 
 Let's get started analyzing some clusters. Assuming that you have the following two files:
 
