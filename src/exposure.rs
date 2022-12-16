@@ -236,7 +236,7 @@ pub fn py_from_memberships(
     translate_df(&mut df)
 }
 
-#[pyfunction(name = "read_json", mode = "SingletonMode::AutoPopulate")]
+#[pyfunction(name = "read_json", mode = "SingletonMode::AsIs")]
 pub fn py_read_json(g: &Graph, filepath: &str, mode: SingletonMode) -> PyResult<PyObject> {
     let mut df = read_json(g, filepath, mode).unwrap();
     translate_df(&mut df)
