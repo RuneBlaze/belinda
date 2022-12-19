@@ -6,7 +6,6 @@ mod unused;
 use exposure::{
     py_bitmap_union, py_from_memberships, py_label_cc, py_label_cc_size, py_nodeset_to_list,
     py_popcnt, py_read_membership_file, py_read_json, set_nthreads, Graph, SingletonMode,
-    // SummarizedDistributionWrapper,
 };
 use pyo3::prelude::*;
 

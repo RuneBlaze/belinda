@@ -197,10 +197,16 @@ pub fn read_membership_file(
     filepath: &str,
     sep: u8,
     mode: SingletonMode,
+    force_string_labels: bool,
 ) -> anyhow::Result<DataFrame> {
     let df = CsvReader::from_path(filepath)?
         .has_header(false)
         .with_delimiter(sep)
+        .with_dtypes_slice(Some(&[DataType::UInt32, if force_string_labels {
+            DataType::Utf8
+        } else {
+            DataType::UInt32
+        }]))
         .finish()?;
     let nid = df.column("column_1")?;
     let cid = df.column("column_2")?;
@@ -209,21 +215,23 @@ pub fn read_membership_file(
 
 #[pyfunction(
     name = "read_membership",
-    mode = "SingletonMode::AutoPopulate",
-    sep = "'\\t'"
+    mode = "SingletonMode::AsIs",
+    sep = "'\\t'",
+    force_string_labels = "false"
 )]
 pub fn py_read_membership_file(
     g: &Graph,
     filepath: &str,
     sep: char,
     mode: SingletonMode,
+    force_string_labels: bool,
 ) -> PyResult<PyObject> {
-    let mut df = read_membership_file(g, filepath, sep as u8, mode).unwrap();
+    let mut df = read_membership_file(g, filepath, sep as u8, mode, force_string_labels).unwrap();
     let translated = translate_df(&mut df)?;
     Ok(translated)
 }
 
-#[pyfunction(name = "read_membership_series", mode = "SingletonMode::AutoPopulate")]
+#[pyfunction(name = "read_membership_series", mode = "SingletonMode::AsIs")]
 pub fn py_from_memberships(
     g: &Graph,
     nodes: &PyAny,

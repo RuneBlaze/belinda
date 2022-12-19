@@ -1,14 +1,29 @@
 # Introduction
 
-Belinda allows using data frames to explore graph clusterings,
-with particular attention paid to community detection. It is designed
-for scalable exploratory data analysis and is an extension to [Polars](https://pola-rs.github.io/polars-book/user-guide/introduction.html).
+Belinda is a high performance data science library for graph clusterings, developed
+as an add-on to the [Polars](https://pola-rs.github.io/polars-book/user-guide/introduction.html) dataframes library.
+Belinda is designed with single-node scalability, performance, and ease of use in mind. It is mostly developed
+for studying community detection outputs (e.g., Leiden, VieClust, etc.).
 
+Belinda maps each cluster to a row inside a dataframe. This abstraction allows manipulating a clustering
+just like how one manipulates a dataframe. Moreover, calculating statistics, writing edited clusterings to disk,
+and some graph analytics (e.g., getting high degree nodes from a graph, and then seeing which clusters they belong to)
+are all made easy with Belinda.
 
-Here is an example showing how Belinda visualizes a clustering:
+## Installation
+
+Try the following
+
+```bash
+pip3 install --pre belinda # --pre is important. Belinda updates frequently
+```
+
+## Five-minute pitch
+
+Here is an example showing how Belinda explores a clustering:
 ```python
 # interative prompt
->>> g.summary() # a graph loaded
+>>> g.summary() # `g` already loaded
 shape: (1, 4)
 ┌────────┬────────┬────────────────┬───────────────────┐
 │ n      ┆ m      ┆ num_components ┆ largest_component │
@@ -18,7 +33,7 @@ shape: (1, 4)
 │ 334863 ┆ 925872 ┆ 1              ┆ 334863            │
 └────────┴────────┴────────────────┴───────────────────┘
 
->>> c # a data frame produced by Belinda
+>>> c # a data frame of a clustering imported by Belinda
 shape: (85036, 6)
 ┌────────┬───────────────┬─────┬─────┬─────┬─────┐
 │ label  ┆ nodes         ┆ n   ┆ m   ┆ c   ┆ mcd │
@@ -55,12 +70,4 @@ shape: (1, 4)
 ╞════════════╪═══════════════╪═══════════════╪════════════════════════════════╡
 │ 60609      ┆ 0.927054      ┆ 0.5739        ┆ [0.000001, 0.000004, 0.000124] │
 └────────────┴───────────────┴───────────────┴────────────────────────────────┘
-```
-
-## Installation
-
-Try the following
-
-```bash
-pip3 install --pre belinda # --pre is important. Belinda updates frequently
 ```
