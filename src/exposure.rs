@@ -13,13 +13,14 @@ use aocluster::{
 };
 use itertools::Itertools;
 use polars::prelude::*;
+use std::io::Write;
 use polars::{df, export::once_cell::sync::OnceCell};
 
 use pyo3::{
     prelude::*,
 };
 use roaring::{MultiOps, RoaringBitmap, RoaringTreemap};
-use std::{path::Path, sync::Arc};
+use std::{path::Path, sync::Arc, io::BufWriter, fs::File};
 
 use crate::{
     df::{build_series_from_sets, iter_roaring, EfficientSet, VecEfficientSet},
@@ -289,56 +290,6 @@ pub struct Graph {
     cc: OnceCell<CCLabels>,
 }
 
-pub trait ClusDataFrame {
-    fn modularity(&self, graph: &Graph, resolution: f64) -> anyhow::Result<Series>;
-    fn cpm(&self, resolution: f64) -> anyhow::Result<Series>;
-    fn covered_num_nodes(&self) -> anyhow::Result<u32>;
-}
-
-impl ClusDataFrame for DataFrame {
-    fn modularity(&self, graph: &Graph, resolution: f64) -> anyhow::Result<Series> {
-        let m = self.column("m")?.u64()?;
-        let c = self.column("c")?.u64()?;
-        let total_l = graph.m();
-        Ok((m.into_iter())
-            .zip(c.into_iter())
-            .map(|(m, c)| {
-                let vol = 2 * m.unwrap() + c.unwrap();
-                calc_modularity_resolution(
-                    m.unwrap() as usize,
-                    vol as usize,
-                    total_l as usize,
-                    resolution,
-                )
-            })
-            .collect())
-    }
-
-    fn cpm(&self, resolution: f64) -> anyhow::Result<Series> {
-        let n = self.column("n")?.u32()?;
-        let m = self.column("m")?.u64()?;
-        Ok(n.into_iter()
-            .zip(m.into_iter())
-            .map(|(n, m)| calc_cpm_resolution(m.unwrap() as usize, n.unwrap() as usize, resolution))
-            .collect())
-    }
-
-    fn covered_num_nodes(&self) -> anyhow::Result<u32> {
-        self.column("can_overlap")
-            .and_then(|_can_overlap| {
-                let nodesets = self.column("nodes")?;
-                let nodesets = iter_roaring(nodesets)
-                    .map(|it| it.try_into().unwrap())
-                    .collect::<Vec<RoaringBitmap>>();
-                Ok(nodesets.union().len() as u32)
-            })
-            .or_else(|_| {
-                let n = self.column("n")?.u32()?;
-                Ok(n.into_iter().map(|n| n.unwrap()).sum())
-            })
-    }
-}
-
 impl Graph {
     pub fn get_cc_labels(&self) -> &CCLabels {
         self.cc.get_or_init(|| alg::cc_labeling(&self.data.graph))
@@ -348,13 +299,28 @@ impl Graph {
 #[pymethods]
 impl Graph {
     #[new]
-    fn new(filepath: &str) -> Self {
+    fn new(filepath: &str) -> anyhow::Result<Self> {
         let raw_data =
-            EnrichedGraph::from_graph(aocluster::base::Graph::parse_from_file(filepath).unwrap());
-        Graph {
+            EnrichedGraph::from_graph(aocluster::base::Graph::parse_from_file(filepath)?);
+        Ok(Graph {
             data: Arc::new(raw_data),
             cc: OnceCell::new(),
+        })
+    }
+
+    fn write_edgelist(&self, filepath: &str) -> anyhow::Result<()> {
+        let g = &self.data.graph;
+        let mut w = BufWriter::new(File::create(filepath)?);
+        for u in &g.nodes {
+            for v in &u.edges {
+                if u.id < *v {
+                    let lhs = g.name_set.rev[u.id as usize];
+                    let rhs = g.name_set.rev[*v as usize];
+                    writeln!(w, "{}\t{}", lhs, rhs)?;
+                }
+            }
         }
+        Ok(())
     }
 
     #[args(verbose = false)]
