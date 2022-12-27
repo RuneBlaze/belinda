@@ -5,7 +5,7 @@ as an add-on to the [Polars](https://pola-rs.github.io/polars-book/user-guide/in
 Belinda is designed with single-node scalability, performance, and ease of use in mind. It is mostly developed
 for studying community detection outputs (e.g., Leiden, VieClust, etc.).
 
-Belinda maps each cluster to a row inside a dataframe. This abstraction allows manipulating a clustering
+Belinda's data model maps each cluster to a row inside a dataframe. This data model allows manipulating a clustering
 just like how one manipulates a dataframe. Moreover, calculating statistics, writing edited clusterings to disk,
 and some graph analytics (e.g., getting high degree nodes from a graph, and then seeing which clusters they belong to)
 are all made easy with Belinda.
@@ -23,7 +23,7 @@ pip3 install --pre belinda # --pre is important. Belinda updates frequently
 Here is an example showing how Belinda explores a clustering:
 ```python
 # interative prompt
->>> g.summary() # `g` already loaded
+>>> g.summary() # `g` a background graph we already loaded
 shape: (1, 4)
 ┌────────┬────────┬────────────────┬───────────────────┐
 │ n      ┆ m      ┆ num_components ┆ largest_component │
