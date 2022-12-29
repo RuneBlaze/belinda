@@ -6,6 +6,9 @@
   <!-- - [Graph Data Frames](./graph_data_frames.md) -->
 - [Clustering Formats and IO](./clustering_formats.md)
   - [Singleton Handling](./singleton_handling.md)
+- [API Reference](./reference.md)
+  - [Predefined Statistics](./predefined_statistics.md)
+  - [Graph Analytics](./graph_analytics.md)
 - [Cookbook](./cookbook.md)
   - [Conversion to Parquet](./conversion_to_parquet.md)
   - [Filtering out Clusters](./filtering_out_clusters.md)

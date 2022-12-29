@@ -9,7 +9,6 @@ use aocluster::{
     belinda::{
         EnrichedGraph,
     },
-    utils::{calc_cpm_resolution, calc_modularity_resolution},
 };
 use itertools::Itertools;
 use polars::prelude::*;
