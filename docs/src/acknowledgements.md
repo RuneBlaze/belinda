@@ -2,7 +2,7 @@
 
 > **Belinda**: People are all we’ve got. [...] No longer a slave, no longer a machine with parts. You’re just a person. In business.
 
-Belinda was influence by and has borrowed code from the following libraries
+Belinda was influenced by and has borrowed code from the following libraries
 
  - [GeoPolars](https://github.com/geopolars/geopolars), MIT licensed
  - [Polars](https://github.com/pola-rs/polars), MIT licensed
