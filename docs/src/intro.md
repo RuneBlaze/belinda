@@ -2,8 +2,10 @@
 
 Belinda is a high performance data science library for graph clusterings, developed
 as an add-on to the [Polars](https://pola-rs.github.io/polars-book/user-guide/introduction.html) dataframes library.
-Belinda is designed with single-node scalability, performance, and ease of use in mind. It is mostly developed
-for studying community detection outputs (e.g., Leiden, VieClust, etc.).
+
+ - Reasonably scalable, high performance
+ - Written in Rust, designed for Python
+ - Bulit-in support for community detection outputs (e.g., Leiden, VieClust, etc.)
 
 Belinda's data model maps each cluster to a row inside a dataframe. This data model allows manipulating a clustering
 just like how one manipulates a dataframe. Moreover, calculating statistics, writing edited clusterings to disk,
