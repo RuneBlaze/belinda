@@ -6,11 +6,16 @@ as an add-on to the [Polars](https://pola-rs.github.io/polars-book/user-guide/in
  - Reasonably scalable, high performance
  - Written in Rust, designed for Python
  - Bulit-in support for community detection outputs (e.g., Leiden, VieClust, etc.)
+ - Designed for graph clusterings, but will generalize beyond
 
 Belinda's data model maps each cluster to a row inside a dataframe. This data model allows manipulating a clustering
 just like how one manipulates a dataframe. Moreover, calculating statistics, writing edited clusterings to disk,
 and some graph analytics (e.g., getting high degree nodes from a graph, and then seeing which clusters they belong to)
 are all made easy with Belinda.
+
+> This library is a heavy work in progress, and the API *will* change substantially (to generalize
+> beyond graph clusterings). Currently,
+> it is being used in-house, and user feedback is heavily used to influence future API decisions.
 
 ## Installation
 
