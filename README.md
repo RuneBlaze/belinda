@@ -8,4 +8,4 @@ Data science library add-on for `polars` specialized for **clustering analysis**
 This library is a heavy work in progress, and the API *will* change substantially (to generalize
 beyond graph clusterings). Currently, it is being used in-house, and user feedback will be heavily used to influence future API decisions.
 
-See [User Guide](https://runeblaze.github.io/belinda/).
+See [User Guide](https://runeblaze.github.io/cluspolars/).
