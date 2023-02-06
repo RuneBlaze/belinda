@@ -1,0 +1,1074 @@
+<!DOCTYPE HTML>
+<html lang="en" class="sidebar-visible no-js light">
+    <head>
+        <!-- Book generated using mdBook -->
+        <meta charset="UTF-8">
+        <title>Belinda User Guide</title>
+                <meta name="robots" content="noindex" />
+                
+
+        <!-- Custom HTML head -->
+        
+
+        <meta content="text/html; charset=utf-8" http-equiv="Content-Type">
+        <meta name="description" content="">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <meta name="theme-color" content="#ffffff" />
+
+                <link rel="icon" href="favicon.svg">
+                        <link rel="shortcut icon" href="favicon.png">
+                <link rel="stylesheet" href="css/variables.css">
+        <link rel="stylesheet" href="css/general.css">
+        <link rel="stylesheet" href="css/chrome.css">
+                <link rel="stylesheet" href="css/print.css" media="print">
+        
+        <!-- Fonts -->
+        <link rel="stylesheet" href="FontAwesome/css/font-awesome.css">
+                <link rel="stylesheet" href="fonts/fonts.css">
+        
+        <!-- Highlight.js Stylesheets -->
+        <link rel="stylesheet" href="highlight.css">
+        <link rel="stylesheet" href="tomorrow-night.css">
+        <link rel="stylesheet" href="ayu-highlight.css">
+
+        <!-- Custom theme stylesheets -->
+        
+                <!-- MathJax -->
+        <script async type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.1/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+            </head>
+    <body>
+        <!-- Provide site root to javascript -->
+        <script type="text/javascript">
+            var path_to_root = "";
+            var default_theme = window.matchMedia("(prefers-color-scheme: dark)").matches ? "navy" : "light";
+        </script>
+
+        <!-- Work around some values being stored in localStorage wrapped in quotes -->
+        <script type="text/javascript">
+            try {
+                var theme = localStorage.getItem('mdbook-theme');
+                var sidebar = localStorage.getItem('mdbook-sidebar');
+
+                if (theme.startsWith('"') && theme.endsWith('"')) {
+                    localStorage.setItem('mdbook-theme', theme.slice(1, theme.length - 1));
+                }
+
+                if (sidebar.startsWith('"') && sidebar.endsWith('"')) {
+                    localStorage.setItem('mdbook-sidebar', sidebar.slice(1, sidebar.length - 1));
+                }
+            } catch (e) { }
+        </script>
+
+        <!-- Set the theme before any content is loaded, prevents flash -->
+        <script type="text/javascript">
+            var theme;
+            try { theme = localStorage.getItem('mdbook-theme'); } catch(e) { }
+            if (theme === null || theme === undefined) { theme = default_theme; }
+            var html = document.querySelector('html');
+            html.classList.remove('no-js')
+            html.classList.remove('light')
+            html.classList.add(theme);
+            html.classList.add('js');
+        </script>
+
+        <!-- Hide / unhide sidebar before it is displayed -->
+        <script type="text/javascript">
+            var html = document.querySelector('html');
+            var sidebar = 'hidden';
+            if (document.body.clientWidth >= 1080) {
+                try { sidebar = localStorage.getItem('mdbook-sidebar'); } catch(e) { }
+                sidebar = sidebar || 'visible';
+            }
+            html.classList.remove('sidebar-visible');
+            html.classList.add("sidebar-" + sidebar);
+        </script>
+
+        <nav id="sidebar" class="sidebar" aria-label="Table of contents">
+            <div class="sidebar-scrollbox">
+                <ol class="chapter"><li class="chapter-item expanded "><a href="intro.html"><strong aria-hidden="true">1.</strong> Introduction</a></li><li class="chapter-item expanded "><a href="quick_start.html"><strong aria-hidden="true">2.</strong> Quick Start</a></li><li><ol class="section"><li class="chapter-item expanded "><a href="gather_statistics.html"><strong aria-hidden="true">2.1.</strong> Gathering Statistics</a></li></ol></li><li class="chapter-item expanded "><a href="clustering_formats.html"><strong aria-hidden="true">3.</strong> Clustering Formats and IO</a></li><li><ol class="section"><li class="chapter-item expanded "><a href="singleton_handling.html"><strong aria-hidden="true">3.1.</strong> Singleton Handling</a></li></ol></li><li class="chapter-item expanded "><a href="reference.html"><strong aria-hidden="true">4.</strong> API Reference</a></li><li><ol class="section"><li class="chapter-item expanded "><a href="predefined_statistics.html"><strong aria-hidden="true">4.1.</strong> Predefined Statistics</a></li><li class="chapter-item expanded "><a href="graph_analytics.html"><strong aria-hidden="true">4.2.</strong> Graph Analytics</a></li></ol></li><li class="chapter-item expanded "><a href="cookbook.html"><strong aria-hidden="true">5.</strong> Cookbook</a></li><li><ol class="section"><li class="chapter-item expanded "><a href="conversion_to_parquet.html"><strong aria-hidden="true">5.1.</strong> Conversion to Parquet</a></li><li class="chapter-item expanded "><a href="filtering_out_clusters.html"><strong aria-hidden="true">5.2.</strong> Filtering out Clusters</a></li><li class="chapter-item expanded "><a href="basic_eda.html"><strong aria-hidden="true">5.3.</strong> Basic EDA</a></li></ol></li><li class="chapter-item expanded "><a href="acknowledgements.html"><strong aria-hidden="true">6.</strong> Acknowledgements</a></li></ol>            </div>
+            <div id="sidebar-resize-handle" class="sidebar-resize-handle"></div>
+        </nav>
+
+        <div id="page-wrapper" class="page-wrapper">
+
+            <div class="page">
+                
+                <div id="menu-bar-hover-placeholder"></div>
+                <div id="menu-bar" class="menu-bar sticky bordered">
+                    <div class="left-buttons">
+                        <button id="sidebar-toggle" class="icon-button" type="button" title="Toggle Table of Contents" aria-label="Toggle Table of Contents" aria-controls="sidebar">
+                            <i class="fa fa-bars"></i>
+                        </button>
+                        <button id="theme-toggle" class="icon-button" type="button" title="Change theme" aria-label="Change theme" aria-haspopup="true" aria-expanded="false" aria-controls="theme-list">
+                            <i class="fa fa-paint-brush"></i>
+                        </button>
+                        <ul id="theme-list" class="theme-popup" aria-label="Themes" role="menu">
+                            <li role="none"><button role="menuitem" class="theme" id="light">Light (default)</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="rust">Rust</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="coal">Coal</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="navy">Navy</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="ayu">Ayu</button></li>
+                        </ul>
+                                                <button id="search-toggle" class="icon-button" type="button" title="Search. (Shortkey: s)" aria-label="Toggle Searchbar" aria-expanded="false" aria-keyshortcuts="S" aria-controls="searchbar">
+                            <i class="fa fa-search"></i>
+                        </button>
+                                            </div>
+
+                    <h1 class="menu-title">Belinda User Guide</h1>
+
+                    <div class="right-buttons">
+                                                <a href="print.html" title="Print this book" aria-label="Print this book">
+                            <i id="print-button" class="fa fa-print"></i>
+                        </a>
+                                                                        
+                    </div>
+                </div>
+
+                                <div id="search-wrapper" class="hidden">
+                    <form id="searchbar-outer" class="searchbar-outer">
+                        <input type="search" id="searchbar" name="searchbar" placeholder="Search this book ..." aria-controls="searchresults-outer" aria-describedby="searchresults-header">
+                    </form>
+                    <div id="searchresults-outer" class="searchresults-outer hidden">
+                        <div id="searchresults-header" class="searchresults-header"></div>
+                        <ul id="searchresults">
+                        </ul>
+                    </div>
+                </div>
+                
+                <!-- Apply ARIA attributes after the sidebar and the sidebar toggle button are added to the DOM -->
+                <script type="text/javascript">
+                    document.getElementById('sidebar-toggle').setAttribute('aria-expanded', sidebar === 'visible');
+                    document.getElementById('sidebar').setAttribute('aria-hidden', sidebar !== 'visible');
+                    Array.from(document.querySelectorAll('#sidebar a')).forEach(function(link) {
+                        link.setAttribute('tabIndex', sidebar === 'visible' ? 0 : -1);
+                    });
+                </script>
+
+                <div id="content" class="content">
+                    <main>
+                        <h1 id="introduction"><a class="header" href="#introduction">Introduction</a></h1>
+<p>Belinda is a high performance data science library for graph clusterings, developed
+as an add-on to the <a href="https://pola-rs.github.io/polars-book/user-guide/introduction.html">Polars</a> dataframes library.</p>
+<ul>
+<li>Reasonably scalable, high performance</li>
+<li>Written in Rust, designed for Python</li>
+<li>Bulit-in support for community detection outputs (e.g., Leiden, VieClust, etc.)</li>
+<li>Designed for graph clusterings, but will generalize beyond</li>
+</ul>
+<p>Belinda’s data model maps each cluster to a row inside a dataframe. This data model allows manipulating a clustering
+just like how one manipulates a dataframe. Moreover, calculating statistics, writing edited clusterings to disk,
+and some graph analytics (e.g., getting high degree nodes from a graph, and then seeing which clusters they belong to)
+are all made easy with Belinda.</p>
+<blockquote>
+<p>This library is a heavy work in progress, and the API <em>will</em> change substantially (to generalize
+beyond graph clusterings). Currently,
+it is being used in-house, and user feedback is heavily used to influence future API decisions.</p>
+</blockquote>
+<h2 id="installation"><a class="header" href="#installation">Installation</a></h2>
+<p>Try the following</p>
+<pre><code class="language-bash">pip3 install --pre belinda # --pre is important. Belinda updates frequently
+</code></pre>
+<h2 id="five-minute-pitch"><a class="header" href="#five-minute-pitch">Five-minute pitch</a></h2>
+<p>Here is an example showing how Belinda explores a clustering:</p>
+<pre><code class="language-python"># interative prompt
+&gt;&gt;&gt; g.summary() # `g` a background graph we already loaded
+shape: (1, 4)
+┌────────┬────────┬────────────────┬───────────────────┐
+│ n      ┆ m      ┆ num_components ┆ largest_component │
+│ ---    ┆ ---    ┆ ---            ┆ ---               │
+│ u32    ┆ u64    ┆ u32            ┆ u32               │
+╞════════╪════════╪════════════════╪═══════════════════╡
+│ 334863 ┆ 925872 ┆ 1              ┆ 334863            │
+└────────┴────────┴────────────────┴───────────────────┘
+
+&gt;&gt;&gt; c # a data frame of a clustering imported by Belinda
+shape: (85036, 6)
+┌────────┬───────────────┬─────┬─────┬─────┬─────┐
+│ label  ┆ nodes         ┆ n   ┆ m   ┆ c   ┆ mcd │
+│ ---    ┆ ---           ┆ --- ┆ --- ┆ --- ┆ --- │
+│ i64    ┆ binary        ┆ u64 ┆ u64 ┆ u64 ┆ u64 │
+╞════════╪═══════════════╪═════╪═════╪═════╪═════╡
+│ 0      ┆ [binary data] ┆ 26  ┆ 115 ┆ 128 ┆ 5   │
+├╌╌╌╌╌╌╌╌┼╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌┼╌╌╌╌╌┼╌╌╌╌╌┼╌╌╌╌╌┼╌╌╌╌╌┤
+│ 8      ┆ [binary data] ┆ 25  ┆ 110 ┆ 537 ┆ 5   │
+├╌╌╌╌╌╌╌╌┼╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌┼╌╌╌╌╌┼╌╌╌╌╌┼╌╌╌╌╌┼╌╌╌╌╌┤
+│ 7      ┆ [binary data] ┆ 25  ┆ 106 ┆ 83  ┆ 5   │
+├╌╌╌╌╌╌╌╌┼╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌┼╌╌╌╌╌┼╌╌╌╌╌┼╌╌╌╌╌┼╌╌╌╌╌┤
+│ 6      ┆ [binary data] ┆ 25  ┆ 107 ┆ 85  ┆ 5   │
+├╌╌╌╌╌╌╌╌┼╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌┼╌╌╌╌╌┼╌╌╌╌╌┼╌╌╌╌╌┼╌╌╌╌╌┤
+│ ...    ┆ ...           ┆ ... ┆ ... ┆ ... ┆ ... │
+├╌╌╌╌╌╌╌╌┼╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌┼╌╌╌╌╌┼╌╌╌╌╌┼╌╌╌╌╌┼╌╌╌╌╌┤
+
+&gt;&gt;&gt; bl.peek(g, c)
+shape: (1, 4)
+┌────────────┬───────────────┬───────────────┬──────────────────┐
+│ n_clusters ┆ node_coverage ┆ edge_coverage ┆ n                │
+│ ---        ┆ ---           ┆ ---           ┆ ---              │
+│ u32        ┆ f64           ┆ f64           ┆ list[f64]        │
+╞════════════╪═══════════════╪═══════════════╪══════════════════╡
+│ 85036      ┆ 1.0           ┆ 0.5739        ┆ [1.0, 3.0, 26.0] │
+└────────────┴───────────────┴───────────────┴──────────────────┘
+
+&gt;&gt;&gt; bl.peek(g, c.filter(pl.col('n') &gt; 1), statistics=[g.modularity()])
+shape: (1, 4)
+┌────────────┬───────────────┬───────────────┬────────────────────────────────┐
+│ n_clusters ┆ node_coverage ┆ edge_coverage ┆ modularity                     │
+│ ---        ┆ ---           ┆ ---           ┆ ---                            │
+│ u32        ┆ f64           ┆ f64           ┆ list[f64]                      │
+╞════════════╪═══════════════╪═══════════════╪════════════════════════════════╡
+│ 60609      ┆ 0.927054      ┆ 0.5739        ┆ [0.000001, 0.000004, 0.000124] │
+└────────────┴───────────────┴───────────────┴────────────────────────────────┘
+</code></pre>
+<div style="break-before: page; page-break-before: always;"></div><h1 id="quick-start"><a class="header" href="#quick-start">Quick Start</a></h1>
+<p>For each cluster, Belinda defines the following variables:</p>
+<ul>
+<li>\(n\) is the number of nodes in a cluster</li>
+<li>\(m\) is the number of internal edges in a cluster</li>
+<li>\(c\) is the number of external edges in a cluster</li>
+</ul>
+<p>These variables are quite expressive. For example, the degree volume \(vol(C) = 2 m + c\)
+is the sum of (global) degree of each node inside the cluster, and as shown can be expressed
+through two of the above variables. Similarly, the intra-cluster conductance can also be expressed
+through the above variables (combined with <code>g.n</code>).</p>
+<h2 id="brief-examples-of-polars"><a class="header" href="#brief-examples-of-polars">Brief examples of Polars</a></h2>
+<p>Polars is a data frames library for Python. Belinda is built upon Polars. For those unfamiliar
+with Polars, let’s look at some very minimal operations to bridge the gap. For more, check out <a href="https://pola-rs.github.io/polars-book/user-guide/index.html">their guide</a>.</p>
+<h3 id="creating-a-data-frame"><a class="header" href="#creating-a-data-frame">Creating a data frame</a></h3>
+<p>Let’s just load the iris dataset:</p>
+<pre><code class="language-python">import polars as pl
+df = pl.read_csv(&quot;https://j.mp/iriscsv&quot;)
+df.head(5)
+</code></pre>
+<p><strong>Output:</strong></p>
+<pre><code>shape: (5, 5)
+┌──────────────┬─────────────┬──────────────┬─────────────┬─────────┐
+│ sepal_length ┆ sepal_width ┆ petal_length ┆ petal_width ┆ species │
+│ ---          ┆ ---         ┆ ---          ┆ ---         ┆ ---     │
+│ f64          ┆ f64         ┆ f64          ┆ f64         ┆ str     │
+╞══════════════╪═════════════╪══════════════╪═════════════╪═════════╡
+│ 5.1          ┆ 3.5         ┆ 1.4          ┆ 0.2         ┆ setosa  │
+├╌╌╌╌╌╌╌╌╌╌╌╌╌╌┼╌╌╌╌╌╌╌╌╌╌╌╌╌┼╌╌╌╌╌╌╌╌╌╌╌╌╌╌┼╌╌╌╌╌╌╌╌╌╌╌╌╌┼╌╌╌╌╌╌╌╌╌┤
+│ 4.9          ┆ 3.0         ┆ 1.4          ┆ 0.2         ┆ setosa  │
+├╌╌╌╌╌╌╌╌╌╌╌╌╌╌┼╌╌╌╌╌╌╌╌╌╌╌╌╌┼╌╌╌╌╌╌╌╌╌╌╌╌╌╌┼╌╌╌╌╌╌╌╌╌╌╌╌╌┼╌╌╌╌╌╌╌╌╌┤
+│ 4.7          ┆ 3.2         ┆ 1.3          ┆ 0.2         ┆ setosa  │
+├╌╌╌╌╌╌╌╌╌╌╌╌╌╌┼╌╌╌╌╌╌╌╌╌╌╌╌╌┼╌╌╌╌╌╌╌╌╌╌╌╌╌╌┼╌╌╌╌╌╌╌╌╌╌╌╌╌┼╌╌╌╌╌╌╌╌╌┤
+│ 4.6          ┆ 3.1         ┆ 1.5          ┆ 0.2         ┆ setosa  │
+├╌╌╌╌╌╌╌╌╌╌╌╌╌╌┼╌╌╌╌╌╌╌╌╌╌╌╌╌┼╌╌╌╌╌╌╌╌╌╌╌╌╌╌┼╌╌╌╌╌╌╌╌╌╌╌╌╌┼╌╌╌╌╌╌╌╌╌┤
+│ 5.0          ┆ 3.6         ┆ 1.4          ┆ 0.2         ┆ setosa  │
+└──────────────┴─────────────┴──────────────┴─────────────┴─────────┘
+</code></pre>
+<h3 id="filtering"><a class="header" href="#filtering">Filtering</a></h3>
+<p>What are the rows with sepal length greater than 5?</p>
+<pre><code class="language-python">&gt;&gt;&gt; df.filter(pl.col('sepal_length') &gt; 5)
+shape: (118, 5)
+┌──────────────┬─────────────┬──────────────┬─────────────┬───────────┐
+│ sepal_length ┆ sepal_width ┆ petal_length ┆ petal_width ┆ species   │
+│ ---          ┆ ---         ┆ ---          ┆ ---         ┆ ---       │
+│ f64          ┆ f64         ┆ f64          ┆ f64         ┆ str       │
+╞══════════════╪═════════════╪══════════════╪═════════════╪═══════════╡
+│ 5.1          ┆ 3.5         ┆ 1.4          ┆ 0.2         ┆ setosa    │
+├╌╌╌╌╌╌╌╌╌╌╌╌╌╌┼╌╌╌╌╌╌╌╌╌╌╌╌╌┼╌╌╌╌╌╌╌╌╌╌╌╌╌╌┼╌╌╌╌╌╌╌╌╌╌╌╌╌┼╌╌╌╌╌╌╌╌╌╌╌┤
+│ 5.4          ┆ 3.9         ┆ 1.7          ┆ 0.4         ┆ setosa    │
+├╌╌╌╌╌╌╌╌╌╌╌╌╌╌┼╌╌╌╌╌╌╌╌╌╌╌╌╌┼╌╌╌╌╌╌╌╌╌╌╌╌╌╌┼╌╌╌╌╌╌╌╌╌╌╌╌╌┼╌╌╌╌╌╌╌╌╌╌╌┤
+│ 5.4          ┆ 3.7         ┆ 1.5          ┆ 0.2         ┆ setosa    │
+├╌╌╌╌╌╌╌╌╌╌╌╌╌╌┼╌╌╌╌╌╌╌╌╌╌╌╌╌┼╌╌╌╌╌╌╌╌╌╌╌╌╌╌┼╌╌╌╌╌╌╌╌╌╌╌╌╌┼╌╌╌╌╌╌╌╌╌╌╌┤
+│ 5.8          ┆ 4.0         ┆ 1.2          ┆ 0.2         ┆ setosa    │
+├╌╌╌╌╌╌╌╌╌╌╌╌╌╌┼╌╌╌╌╌╌╌╌╌╌╌╌╌┼╌╌╌╌╌╌╌╌╌╌╌╌╌╌┼╌╌╌╌╌╌╌╌╌╌╌╌╌┼╌╌╌╌╌╌╌╌╌╌╌┤
+│ ...          ┆ ...         ┆ ...          ┆ ...         ┆ ...       │
+├╌╌╌╌╌╌╌╌╌╌╌╌╌╌┼╌╌╌╌╌╌╌╌╌╌╌╌╌┼╌╌╌╌╌╌╌╌╌╌╌╌╌╌┼╌╌╌╌╌╌╌╌╌╌╌╌╌┼╌╌╌╌╌╌╌╌╌╌╌┤
+│ 6.3          ┆ 2.5         ┆ 5.0          ┆ 1.9         ┆ virginica │
+├╌╌╌╌╌╌╌╌╌╌╌╌╌╌┼╌╌╌╌╌╌╌╌╌╌╌╌╌┼╌╌╌╌╌╌╌╌╌╌╌╌╌╌┼╌╌╌╌╌╌╌╌╌╌╌╌╌┼╌╌╌╌╌╌╌╌╌╌╌┤
+│ 6.5          ┆ 3.0         ┆ 5.2          ┆ 2.0         ┆ virginica │
+├╌╌╌╌╌╌╌╌╌╌╌╌╌╌┼╌╌╌╌╌╌╌╌╌╌╌╌╌┼╌╌╌╌╌╌╌╌╌╌╌╌╌╌┼╌╌╌╌╌╌╌╌╌╌╌╌╌┼╌╌╌╌╌╌╌╌╌╌╌┤
+│ 6.2          ┆ 3.4         ┆ 5.4          ┆ 2.3         ┆ virginica │
+├╌╌╌╌╌╌╌╌╌╌╌╌╌╌┼╌╌╌╌╌╌╌╌╌╌╌╌╌┼╌╌╌╌╌╌╌╌╌╌╌╌╌╌┼╌╌╌╌╌╌╌╌╌╌╌╌╌┼╌╌╌╌╌╌╌╌╌╌╌┤
+│ 5.9          ┆ 3.0         ┆ 5.1          ┆ 1.8         ┆ virginica │
+└──────────────┴─────────────┴──────────────┴─────────────┴───────────┘
+</code></pre>
+<p>See that Polars operate with this notion of “expressions”. See <a href="https://pola-rs.github.io/polars-book/user-guide/dsl/intro.html">their guide</a> for more info.</p>
+<h3 id="summary-statistics"><a class="header" href="#summary-statistics">Summary Statistics</a></h3>
+<p>What is the average sepal length of the <code>setosa</code> species?</p>
+<pre><code class="language-python">&gt;&gt;&gt; df.filter(pl.col('species') == 'setosa').select(pl.col('sepal_length').mean().alias('avg_sepal_length'))
+shape: (1, 1)
+┌──────────────────┐
+│ avg_sepal_length │
+│ ---              │
+│ f64              │
+╞══════════════════╡
+│ 5.006            │
+└──────────────────┘
+</code></pre>
+<h2 id="starting-with-belinda"><a class="header" href="#starting-with-belinda">Starting with Belinda</a></h2>
+<p>Let’s get started analyzing some clusters. The goal is to notice how similar
+it is manipulating the Iris dataset compared to manipulating a clustering. Assuming that you have the following two files:</p>
+<ol>
+<li><code>com-amazon.ungraph.txt</code> - from <a href="http://snap.stanford.edu/data/bigdata/communities/com-amazon.ungraph.txt.gz">SNAP</a>, with comments removed</li>
+<li><code>com-amazon.leiden.txt</code> - from running Leiden, default mode (CPM optimization, r = 0.2)</li>
+</ol>
+<p>The latter can be generated by running the following command (<code>runleiden</code> from <a href="https://pypi.org/project/runleiden/">here</a>):</p>
+<pre><code class="language-bash">runleiden -i com-amazon.ungraph.txt -r 0.2 -o com-amazon.leiden.txt
+</code></pre>
+<p>We have also provided these files for your convenience <a href="https://github.com/RuneBlaze/com-amazon-example">here</a>.</p>
+<h3 id="basic-exploration"><a class="header" href="#basic-exploration">Basic exploration</a></h3>
+<pre><code class="language-python">import belinda as bl
+import polars as pl
+
+g = bl.Graph(&quot;com-amazon.ungraph.txt&quot;)
+g.summary()
+</code></pre>
+<p>Output:</p>
+<pre><code class="language-python">shape: (1, 4)
+┌────────┬────────┬────────────────┬───────────────────┐
+│ n      ┆ m      ┆ num_components ┆ largest_component │
+│ ---    ┆ ---    ┆ ---            ┆ ---               │
+│ u32    ┆ u64    ┆ u32            ┆ u32               │
+╞════════╪════════╪════════════════╪═══════════════════╡
+│ 334863 ┆ 925872 ┆ 1              ┆ 334863            │
+└────────┴────────┴────────────────┴───────────────────┘
+</code></pre>
+<p>So we know that this graph has 334863 nodes and 925872 edges, and that it is a single component.</p>
+<pre><code class="language-python">print(g.n, g.m)
+</code></pre>
+<p><strong>Output:</strong></p>
+<pre><code>334863 925872
+</code></pre>
+<p>Now let’s actually load the clustering. Leiden clusters are given in the so-called “membership” format (explained <a href="./clustering_formats.html">here</a>).
+Belinda’s clusterings should always be paired with graphs, so let’s also pass in <code>g</code>, the graph we just loaded:</p>
+<pre><code class="language-python">c = bl.read_membership(g, &quot;com-amazon.leiden.txt&quot;)
+c
+</code></pre>
+<p><strong>Output: (truncated)</strong></p>
+<pre><code class="language-python">shape: (85036, 6)
+┌────────┬───────────────┬─────┬─────┬─────┬─────┐
+│ label  ┆ nodes         ┆ n   ┆ m   ┆ c   ┆ mcd │
+│ ---    ┆ ---           ┆ --- ┆ --- ┆ --- ┆ --- │
+│ i64    ┆ binary        ┆ u64 ┆ u64 ┆ u64 ┆ u64 │
+╞════════╪═══════════════╪═════╪═════╪═════╪═════╡
+│ 32880  ┆ [binary data] ┆ 4   ┆ 5   ┆ 1   ┆ 2   │
+├╌╌╌╌╌╌╌╌┼╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌┼╌╌╌╌╌┼╌╌╌╌╌┼╌╌╌╌╌┼╌╌╌╌╌┤
+│ 29416  ┆ [binary data] ┆ 4   ┆ 3   ┆ 15  ┆ 1   │
+├╌╌╌╌╌╌╌╌┼╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌┼╌╌╌╌╌┼╌╌╌╌╌┼╌╌╌╌╌┼╌╌╌╌╌┤
+│ 10240  ┆ [binary data] ┆ 8   ┆ 21  ┆ 13  ┆ 4   │
+├╌╌╌╌╌╌╌╌┼╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌┼╌╌╌╌╌┼╌╌╌╌╌┼╌╌╌╌╌┼╌╌╌╌╌┤
+│ 137512 ┆ [binary data] ┆ 1   ┆ 0   ┆ 2   ┆ 0   │
+├╌╌╌╌╌╌╌╌┼╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌┼╌╌╌╌╌┼╌╌╌╌╌┼╌╌╌╌╌┼╌╌╌╌╌┤
+│ ...    ┆ ...           ┆ ... ┆ ... ┆ ... ┆ ... │
+├╌╌╌╌╌╌╌╌┼╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌┼╌╌╌╌╌┼╌╌╌╌╌┼╌╌╌╌╌┼╌╌╌╌╌┤
+│ 55193  ┆ [binary data] ┆ 2   ┆ 1   ┆ 3   ┆ 1   │
+├╌╌╌╌╌╌╌╌┼╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌┼╌╌╌╌╌┼╌╌╌╌╌┼╌╌╌╌╌┼╌╌╌╌╌┤
+</code></pre>
+<p>Let’s take a closer look here. What do these columns and rows mean?
+First, Belinda operates under the data model that
+this so-called <strong>cluster data frame</strong> has each row representing a cluster, and this cluster data frame is simply implemented as a Polars data frame.
+The columns can be described as follows:</p>
+<ul>
+<li><code>label</code>: the name of this cluster. Note that it need not be an integer.</li>
+<li><code>nodes</code>: a special column containing all the nodes of this cluster. Although representing this as a <code>list[int]</code> might be more intuitive, Belinda at this moment stores a compressed bitmap (roaring bitmap) in this column, therefore shown as an opaque <code>[binary data]</code>.</li>
+<li><code>n</code>, <code>m</code>, <code>c</code>: these are the variables denoted at the top of this page, the number of nodes, the number of internal edges, the number of external edges relative to this cluster, respectively. An important tip to emphasize again is that these variables generate other statistics, for example \(\frac{2 m}{n}\) is the average degree of a node in this cluster.</li>
+<li><code>mcd</code>: the minimum core degree of this cluster, defined as the minimum degree of the subgraph induced on this cluster.</li>
+</ul>
+<p>With that explained, let’s take a closer look at this clustering. First, it makes sense to reorder the clusters by sorting decreasingly by cluster sizes. We just reuse what is provided in Polars for us to sort this data frame:</p>
+<pre><code class="language-python">c = c.sort(pl.col('n'), reverse=True)
+</code></pre>
+<p><code>c</code> now looks like this (truncated output):</p>
+<pre><code class="language-python">shape: (85036, 6)
+┌────────┬───────────────┬─────┬─────┬─────┬─────┐
+│ label  ┆ nodes         ┆ n   ┆ m   ┆ c   ┆ mcd │
+│ ---    ┆ ---           ┆ --- ┆ --- ┆ --- ┆ --- │
+│ i64    ┆ binary        ┆ u64 ┆ u64 ┆ u64 ┆ u64 │
+╞════════╪═══════════════╪═════╪═════╪═════╪═════╡
+│ 0      ┆ [binary data] ┆ 26  ┆ 115 ┆ 128 ┆ 5   │
+├╌╌╌╌╌╌╌╌┼╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌┼╌╌╌╌╌┼╌╌╌╌╌┼╌╌╌╌╌┼╌╌╌╌╌┤
+│ 8      ┆ [binary data] ┆ 25  ┆ 110 ┆ 537 ┆ 5   │
+├╌╌╌╌╌╌╌╌┼╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌┼╌╌╌╌╌┼╌╌╌╌╌┼╌╌╌╌╌┼╌╌╌╌╌┤
+│ 7      ┆ [binary data] ┆ 25  ┆ 106 ┆ 83  ┆ 5   │
+├╌╌╌╌╌╌╌╌┼╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌┼╌╌╌╌╌┼╌╌╌╌╌┼╌╌╌╌╌┼╌╌╌╌╌┤
+│ 6      ┆ [binary data] ┆ 25  ┆ 107 ┆ 85  ┆ 5   │
+├╌╌╌╌╌╌╌╌┼╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌┼╌╌╌╌╌┼╌╌╌╌╌┼╌╌╌╌╌┼╌╌╌╌╌┤
+│ ...    ┆ ...           ┆ ... ┆ ... ┆ ... ┆ ... │
+├╌╌╌╌╌╌╌╌┼╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌┼╌╌╌╌╌┼╌╌╌╌╌┼╌╌╌╌╌┼╌╌╌╌╌┤
+</code></pre>
+<p>Some information we immediately gathered:</p>
+<ol>
+<li>There are 85036 clusters generated by Leiden</li>
+<li>The largest cluster has 26 nodes</li>
+</ol>
+<p>At this point we might even conclude that enough is done: getting the number of nodes and edges per each cluster is already not entirely trivial, so let’s just export what we gathered to a CSV file:</p>
+<pre><code class="language-python"># &quot;nodes&quot; is of type binary, hence not writable to CSV
+&gt;&gt;&gt; c.drop(&quot;nodes&quot;).write_csv(&quot;com-amazon.leiden.stats.csv&quot;)
+&gt;&gt;&gt; !head com-amazon.leiden.stats.csv
+label,n,m,c,mcd
+0,26,115,128,5
+8,25,110,537,5
+7,25,106,83,5
+6,25,107,85,5
+5,25,107,97,5
+4,25,104,13,5
+3,25,107,66,4
+11,25,101,76,5
+10,25,111,62,5
+</code></pre>
+<p>Honestly, not bad. One can even write it as a Parquet file for much faster loading next time analyzing this clustering:</p>
+<pre><code class="language-python"># If we want to completely save `c` to load it next time quickly
+c.write_parquet(&quot;./com-amazon.leiden.parquet&quot;)
+# pl.read_parquet(&quot;./com-amazon.leiden.parquet&quot;) retrieves it for later
+</code></pre>
+<p>But let’s do something more fun this time. Let’s just say that we are interested in the larger clusters,
+those at least 50th percentile in size. We can do this by filtering the data frame:</p>
+<pre><code class="language-python">&gt;&gt;&gt; c50 = c.filter(pl.col('n') &gt;= pl.col('n').quantile(0.5))
+&gt;&gt;&gt; c50
+shape: (49716, 6)
+┌───────┬───────────────┬─────┬─────┬─────┬─────┐
+│ label ┆ nodes         ┆ n   ┆ m   ┆ c   ┆ mcd │
+│ ---   ┆ ---           ┆ --- ┆ --- ┆ --- ┆ --- │
+│ i64   ┆ binary        ┆ u64 ┆ u64 ┆ u64 ┆ u64 │
+╞═══════╪═══════════════╪═════╪═════╪═════╪═════╡
+│ 0     ┆ [binary data] ┆ 26  ┆ 115 ┆ 128 ┆ 5   │
+├╌╌╌╌╌╌╌┼╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌┼╌╌╌╌╌┼╌╌╌╌╌┼╌╌╌╌╌┼╌╌╌╌╌┤
+│ 8     ┆ [binary data] ┆ 25  ┆ 110 ┆ 537 ┆ 5   │
+├╌╌╌╌╌╌╌┼╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌┼╌╌╌╌╌┼╌╌╌╌╌┼╌╌╌╌╌┼╌╌╌╌╌┤
+│ 7     ┆ [binary data] ┆ 25  ┆ 106 ┆ 83  ┆ 5   │
+├╌╌╌╌╌╌╌┼╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌┼╌╌╌╌╌┼╌╌╌╌╌┼╌╌╌╌╌┼╌╌╌╌╌┤
+│ 6     ┆ [binary data] ┆ 25  ┆ 107 ┆ 85  ┆ 5   │
+├╌╌╌╌╌╌╌┼╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌┼╌╌╌╌╌┼╌╌╌╌╌┼╌╌╌╌╌┼╌╌╌╌╌┤
+│ ...   ┆ ...           ┆ ... ┆ ... ┆ ... ┆ ... │
+├╌╌╌╌╌╌╌┼╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌┼╌╌╌╌╌┼╌╌╌╌╌┼╌╌╌╌╌┼╌╌╌╌╌┤
+</code></pre>
+<p>Let’s export this file back into the membership format, since it does seem like a widely used format for clustering:</p>
+<pre><code class="language-python">&gt;&gt;&gt; bl.write_membership(g, c50, &quot;./com-amazon.leiden.50.txt&quot;)
+&gt;&gt;&gt; !head com-amazon.leiden.50.txt
+1	18951
+88160	18951
+118052	35215
+161555	18951
+244916	19694
+346495	18951
+444232	47430
+447165	39248
+500600	18951
+2	3680
+</code></pre>
+<div style="break-before: page; page-break-before: always;"></div><h1 id="gathering-statistics"><a class="header" href="#gathering-statistics">Gathering Statistics</a></h1>
+<p>The Constants Potts Model (CPM) is an optimization problem for community detection (a form of clustering).
+The maximization problem CPM defines is <em>additive</em> for all clusters, meaning that
+each cluster has its own independent score, and the total score of the entire clustering
+is the sum of the score of its clusters. The optimization problem asks to assign clusters
+to maximize the total score.</p>
+<p>The quality/score of a single cluster \(S_i\) where \(S_i\) has \(n\) nodes and \(m\)
+edges (internal nodes and edges) is defined by the following function, parameterized
+by a resolution value \(\gamma \in (0, 1]\):</p>
+<p>\[
+Q(S_i) = m - \gamma \binom{n}{2}
+\]</p>
+<p>And given a clustering \(\{S_i\}\), the quality of this clustering is defined as:</p>
+<p>\[
+Q(\{S_i\}) = \sum_{i=1} Q(S_i)
+\]</p>
+<p>A naive question to ask this point is: given a clustering, what is the CPM quality on each of its clusters,
+and what is the CPM quality of the entire clustering?</p>
+<h2 id="calculating-cpm-in-a-composable-way"><a class="header" href="#calculating-cpm-in-a-composable-way">Calculating CPM in a composable way</a></h2>
+<p>Assuming that we still have the <code>c</code> cluster data frame obtained from <a href="./quick_start.html">Quick Start</a> (if stored as Parquet,
+it is easy to load it back) and the <code>g</code> graph. Let’s see what we can do to calculate the CPM score for each cluster,
+and of course, after we have the CPM score of each cluster, we just sum them up to get the total CPM score of the clustering.</p>
+<p>Let’s look at our clustering again:</p>
+<pre><code class="language-python">&gt;&gt;&gt; c
+shape: (85036, 6)
+┌────────┬───────────────┬─────┬─────┬─────┬─────┐
+│ label  ┆ nodes         ┆ n   ┆ m   ┆ c   ┆ mcd │
+│ ---    ┆ ---           ┆ --- ┆ --- ┆ --- ┆ --- │
+│ i64    ┆ binary        ┆ u64 ┆ u64 ┆ u64 ┆ u64 │
+╞════════╪═══════════════╪═════╪═════╪═════╪═════╡
+│ 0      ┆ [binary data] ┆ 26  ┆ 115 ┆ 128 ┆ 5   │
+├╌╌╌╌╌╌╌╌┼╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌┼╌╌╌╌╌┼╌╌╌╌╌┼╌╌╌╌╌┼╌╌╌╌╌┤
+│ 8      ┆ [binary data] ┆ 25  ┆ 110 ┆ 537 ┆ 5   │
+├╌╌╌╌╌╌╌╌┼╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌┼╌╌╌╌╌┼╌╌╌╌╌┼╌╌╌╌╌┼╌╌╌╌╌┤
+│ 7      ┆ [binary data] ┆ 25  ┆ 106 ┆ 83  ┆ 5   │
+├╌╌╌╌╌╌╌╌┼╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌┼╌╌╌╌╌┼╌╌╌╌╌┼╌╌╌╌╌┼╌╌╌╌╌┤
+│ 6      ┆ [binary data] ┆ 25  ┆ 107 ┆ 85  ┆ 5   │
+├╌╌╌╌╌╌╌╌┼╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌┼╌╌╌╌╌┼╌╌╌╌╌┼╌╌╌╌╌┼╌╌╌╌╌┤
+│ ...    ┆ ...           ┆ ... ┆ ... ┆ ... ┆ ... │
+├╌╌╌╌╌╌╌╌┼╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌┼╌╌╌╌╌┼╌╌╌╌╌┼╌╌╌╌╌┼╌╌╌╌╌┤
+</code></pre>
+<p>So let’s take a step back: what is the CPM score of cluster <code>0</code>? Using the definition:</p>
+<pre><code class="language-python">&gt;&gt;&gt; gamma = 0.2 # this cluster is obtained with resolution = 0.2
+&gt;&gt;&gt; 115 - 26 * (26 - 1) * 0.5 * gamma # a rather stupid way to write choose2
+50.0
+</code></pre>
+<p>So cluster <code>0</code> has CPM score <code>50.0</code>, which seems right from the given definition. Now we are ready to take on the entire clustering:</p>
+<pre><code class="language-python">&gt;&gt;&gt; c_cpm = c.with_column((pl.col(&quot;m&quot;) - pl.col(&quot;n&quot;) * (pl.col(&quot;n&quot;) - 1) * 0.5 * gamma).alias(&quot;cpm&quot;))
+&gt;&gt;&gt; c_cpm
+shape: (85036, 7)
+┌────────┬───────────────┬─────┬─────┬─────┬─────┬──────┐
+│ label  ┆ nodes         ┆ n   ┆ m   ┆ c   ┆ mcd ┆ cpm  │
+│ ---    ┆ ---           ┆ --- ┆ --- ┆ --- ┆ --- ┆ ---  │
+│ i64    ┆ binary        ┆ u64 ┆ u64 ┆ u64 ┆ u64 ┆ f64  │
+╞════════╪═══════════════╪═════╪═════╪═════╪═════╪══════╡
+│ 0      ┆ [binary data] ┆ 26  ┆ 115 ┆ 128 ┆ 5   ┆ 50.0 │
+├╌╌╌╌╌╌╌╌┼╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌┼╌╌╌╌╌┼╌╌╌╌╌┼╌╌╌╌╌┼╌╌╌╌╌┼╌╌╌╌╌╌┤
+│ 8      ┆ [binary data] ┆ 25  ┆ 110 ┆ 537 ┆ 5   ┆ 50.0 │
+├╌╌╌╌╌╌╌╌┼╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌┼╌╌╌╌╌┼╌╌╌╌╌┼╌╌╌╌╌┼╌╌╌╌╌┼╌╌╌╌╌╌┤
+│ 7      ┆ [binary data] ┆ 25  ┆ 106 ┆ 83  ┆ 5   ┆ 46.0 │
+├╌╌╌╌╌╌╌╌┼╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌┼╌╌╌╌╌┼╌╌╌╌╌┼╌╌╌╌╌┼╌╌╌╌╌┼╌╌╌╌╌╌┤
+│ 6      ┆ [binary data] ┆ 25  ┆ 107 ┆ 85  ┆ 5   ┆ 47.0 │
+├╌╌╌╌╌╌╌╌┼╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌┼╌╌╌╌╌┼╌╌╌╌╌┼╌╌╌╌╌┼╌╌╌╌╌┼╌╌╌╌╌╌┤
+│ ...    ┆ ...           ┆ ... ┆ ... ┆ ... ┆ ... ┆ ...  │
+├╌╌╌╌╌╌╌╌┼╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌┼╌╌╌╌╌┼╌╌╌╌╌┼╌╌╌╌╌┼╌╌╌╌╌┼╌╌╌╌╌╌┤
+│ 295297 ┆ [binary data] ┆ 1   ┆ 0   ┆ 1   ┆ 0   ┆ 0.0  │
+├╌╌╌╌╌╌╌╌┼╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌┼╌╌╌╌╌┼╌╌╌╌╌┼╌╌╌╌╌┼╌╌╌╌╌┼╌╌╌╌╌╌┤
+</code></pre>
+<p>Note that even though a bit roundabout, we did manage to use the <code>n</code> and <code>m</code> column directly
+to generate the <code>cpm</code> column, and our calculation follows straight from the definition.</p>
+<p>In fact, if we want, we can define the following expression ourselves:</p>
+<pre><code class="language-python">from polars import col
+def cpm(r):
+    return (col(&quot;m&quot;) - r * col(&quot;n&quot;) * (col(&quot;n&quot;) - 1) / 2).alias(&quot;cpm&quot;)
+</code></pre>
+<pre><code class="language-python">&gt;&gt;&gt; c.with_column(cpm(gamma))
+shape: (85036, 7)
+┌────────┬───────────────┬─────┬─────┬─────┬─────┬──────┐
+│ label  ┆ nodes         ┆ n   ┆ m   ┆ c   ┆ mcd ┆ cpm  │
+│ ---    ┆ ---           ┆ --- ┆ --- ┆ --- ┆ --- ┆ ---  │
+│ i64    ┆ binary        ┆ u64 ┆ u64 ┆ u64 ┆ u64 ┆ f64  │
+╞════════╪═══════════════╪═════╪═════╪═════╪═════╪══════╡
+│ 0      ┆ [binary data] ┆ 26  ┆ 115 ┆ 128 ┆ 5   ┆ 50.0 │
+├╌╌╌╌╌╌╌╌┼╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌┼╌╌╌╌╌┼╌╌╌╌╌┼╌╌╌╌╌┼╌╌╌╌╌┼╌╌╌╌╌╌┤
+│ 8      ┆ [binary data] ┆ 25  ┆ 110 ┆ 537 ┆ 5   ┆ 50.0 │
+├╌╌╌╌╌╌╌╌┼╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌┼╌╌╌╌╌┼╌╌╌╌╌┼╌╌╌╌╌┼╌╌╌╌╌┼╌╌╌╌╌╌┤
+│ 7      ┆ [binary data] ┆ 25  ┆ 106 ┆ 83  ┆ 5   ┆ 46.0 │
+├╌╌╌╌╌╌╌╌┼╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌┼╌╌╌╌╌┼╌╌╌╌╌┼╌╌╌╌╌┼╌╌╌╌╌┼╌╌╌╌╌╌┤
+│ 6      ┆ [binary data] ┆ 25  ┆ 107 ┆ 85  ┆ 5   ┆ 47.0 │
+├╌╌╌╌╌╌╌╌┼╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌┼╌╌╌╌╌┼╌╌╌╌╌┼╌╌╌╌╌┼╌╌╌╌╌┼╌╌╌╌╌╌┤
+</code></pre>
+<p>Note how composable calculating CPM felt like: one can abstract the mathematical
+expression into Polars expressions, and then abstract them into a call like <code>cpm(gamma)</code>.</p>
+<p>Now let’s check: are there any clusters that have negative CPM scores?</p>
+<pre><code class="language-python">&gt;&gt;&gt; c.with_column(cpm(gamma)).filter(pl.col('cpm') &lt; 0)
+shape: (0, 7)
+┌───────┬────────┬─────┬─────┬─────┬─────┬─────┐
+│ label ┆ nodes  ┆ n   ┆ m   ┆ c   ┆ mcd ┆ cpm │
+│ ---   ┆ ---    ┆ --- ┆ --- ┆ --- ┆ --- ┆ --- │
+│ i64   ┆ binary ┆ u64 ┆ u64 ┆ u64 ┆ u64 ┆ f64 │
+╞═══════╪════════╪═════╪═════╪═════╪═════╪═════╡
+└───────┴────────┴─────┴─────┴─────┴─────┴─────┘
+</code></pre>
+<p>which looks right: clusters should never have negative CPM scores.</p>
+<p>Now we are ready to calculate the optimization score:</p>
+<pre><code class="language-python">&gt;&gt;&gt; c.with_column(cpm(gamma)).select(pl.col('cpm').sum())
+shape: (1, 1)
+┌──────────┐
+│ cpm      │
+│ ---      │
+│ f64      │
+╞══════════╡
+│ 343848.0 │
+└──────────┘
+</code></pre>
+<p>Although we don’t know how to interpret the optimization score (after all, it is just a score), it is good to
+know that it can be derived in a composable way.</p>
+<div style="break-before: page; page-break-before: always;"></div><h1 id="clustering-formats-and-io"><a class="header" href="#clustering-formats-and-io">Clustering Formats and IO</a></h1>
+<h2 id="membership-format"><a class="header" href="#membership-format">Membership format</a></h2>
+<p>A format where each line has a “membership assignment” in the form
+<code>node_id&lt;tab&gt;cluster_id</code>, assigning a node to a specific cluster.</p>
+<p>Example (note that I used spaces as tabs below):</p>
+<pre><code>0   1
+1   1
+2   1
+3   2
+4   2
+5   2
+</code></pre>
+<p>The above clustering contains two clusters each of size three.</p>
+<p>Used by Leiden and presumably other clustering methods. This is a very “raw” format. Notably,
+it is very hard to individually annotate clusters to
+have extra information (e.g. quality about that cluster).</p>
+<h3 id="io-operations"><a class="header" href="#io-operations">IO operations</a></h3>
+<ul>
+<li><code>bl.read_membership(g, filename, sep = '\t', mode = bl.SingletonMode.AsIs)</code> reads the <code>sep</code> separated membership format.</li>
+<li><code>bl.write_membership(g, clus, filename)</code> writes the <code>clus</code> cluster data frame in membership format to <code>filename</code>.</li>
+<li><code>bl.read_membership_series(g, node_series, cluster_series, mode = bl.SingletonMode.AsIs)</code> takes the nodes (specified as <code>node_series</code>, a Polars <code>Series</code>) and the clusters correspondingly assigned (specified as <code>cluster_series</code>) and returns the cluster data frame. This is useful for parsing custom membership formats.
+<ul>
+<li>For example, <code>df = pl.read_csv(&quot;out.csv&quot;)</code> and then <code>bl.read_membership_series(g, df['node'], df['cluster'])</code> can be a good pairing</li>
+</ul>
+</li>
+</ul>
+<h2 id="json-format"><a class="header" href="#json-format">JSON format</a></h2>
+<p>Designed by Belinda to be an easily consumable
+and producible “sane” format for clustering.
+This new-line delimited JSON format has each line
+representing a cluster, and in its bare form like this:</p>
+<pre><code>{&quot;label&quot;: 0, &quot;nodes&quot;: [0, 1, 2]}
+{&quot;label&quot;: 1, &quot;nodes&quot;: [3, 4, 5]}
+</code></pre>
+<p>Additional attributes are encouraged, for example, the following is also a valid cluster:</p>
+<pre><code>{&quot;label&quot;: 0, &quot;nodes&quot;: [0, 1, 2], &quot;connectivity&quot;: 1}
+</code></pre>
+<p>The only hard requirements are:</p>
+<ul>
+<li>Each object should have a “node” property of type <code>number[]</code> (but should in fact be integers)</li>
+<li>Each object should have a “label” property of any type (that is internally consistent for the clustering)</li>
+</ul>
+<p>Extra properties are supported and will be loaded into the data frame.</p>
+<p>The JSON format is designed to be usable with tools such as <code>jq</code>.</p>
+<h3 id="io-operations-1"><a class="header" href="#io-operations-1">IO operations</a></h3>
+<ul>
+<li><code>bl.read_json(g, filename, mode = bl.SingletonMode.AsIs)</code> reads the JSON format.</li>
+<li><code>bl.write_json(g, clus, filename)</code> writes the <code>clus</code> cluster data frame in JSON format to <code>filename</code>.</li>
+</ul>
+<div style="break-before: page; page-break-before: always;"></div><h1 id="singleton-handling"><a class="header" href="#singleton-handling">Singleton Handling</a></h1>
+<p>Should there be nodes that don’t belong to any cluster? This is a question treated differently by different clustering algorithms. For example, Leiden assigns every node to a cluster. IKC only outputs clusters that are deemed “valid”. Some people prefer to
+simply ignore singleton clusters when doing analyses. Belinda tries to be flexible by letting the user decide
+which philosophy to take when reading in the clusters. In other words, users can specify a <code>mode</code> as to read
+the clusters. For example, the following statement will read clusters but ignore all singletons:</p>
+<pre><code class="language-python">bl.read_membership(g, cluster_path, mode = SingletonMode.Ignore)
+</code></pre>
+<h2 id="singleton-modes"><a class="header" href="#singleton-modes">Singleton Modes</a></h2>
+<ul>
+<li><code>bl.SingletonMode.AsIs</code>: read the input clustering “as-is” (see also <a href="singleton_handling.html#dummy-node-tolerance">Dummy Node Tolerance</a>). Keep whatever the input has. This is the default.</li>
+<li><code>bl.SingletonMode.Ignore</code>: remove all singleton clusters</li>
+<li><code>bl.SingletonMode.AutoPopulate</code>: after reading the input clustering as-is, checks if there are nodes that are not assigned to any cluster. If so, for each node create a singleton cluster to house it. The new cluster will have a <code>NULL</code> label.</li>
+</ul>
+<h2 id="dummy-node-tolerance"><a class="header" href="#dummy-node-tolerance">Dummy Node Tolerance</a></h2>
+<p>Some clustering methods expect continuous node ids from the input graphs.
+That is, if the input file has nodeset <code>{0, 3}</code>, then the clustering method
+will actually create four nodes (<code>{0, 1, 2, 3}</code>) in total. These padded nodes are called “dummy nodes”. First, Belinda does not create dummy nodes unlike some other software. Second, Belinda, when parsing clusters, actually actively <em>removes</em> these dummy nodes when seeing them.</p>
+<div style="break-before: page; page-break-before: always;"></div><h1 id="reference"><a class="header" href="#reference">Reference</a></h1>
+<div style="break-before: page; page-break-before: always;"></div><h1 id="predefined-statistics"><a class="header" href="#predefined-statistics">Predefined Statistics</a></h1>
+<p>Given a graph <code>g</code>, Belinda provides these “quality measures” for clusters dependent on
+the graph <code>g</code>.
+Note that statistics such as <code>mcd</code> are already provided in the columns for the data frame.</p>
+<h2 id="gn-gm"><a class="header" href="#gn-gm"><code>g.n</code>, <code>g.m</code></a></h2>
+<p>These are shorthands, <code>g.n</code> is the number of nodes, and <code>g.m</code> is the number of edges
+for the entire graph.</p>
+<h2 id="gmodularityr1"><a class="header" href="#gmodularityr1"><code>g.modularity(r=1)</code></a></h2>
+<p>“Vanilla” modularity measure of a cluster with resolution defaulting to 1, defined somewhat as:</p>
+<pre><code class="language-python"># degree volume
+vol = (col(&quot;m&quot;) * 2 + col(&quot;c&quot;)).alias(&quot;vol&quot;)
+
+def modularity(self, r=1):
+    big_l = self.m
+    return (col(&quot;m&quot;) / big_l - r * (vol / (2 * big_l)) ** 2).alias(&quot;modularity&quot;)
+</code></pre>
+<h3 id="example"><a class="header" href="#example">Example</a></h3>
+<pre><code class="language-python">&gt;&gt;&gt; c.head(5) # assuming clustering `c` already loaded
+shape: (5, 6)
+┌────────┬───────────────┬─────┬─────┬─────┬─────┐
+│ label  ┆ nodes         ┆ n   ┆ m   ┆ c   ┆ mcd │
+│ ---    ┆ ---           ┆ --- ┆ --- ┆ --- ┆ --- │
+│ i64    ┆ binary        ┆ u64 ┆ u64 ┆ u64 ┆ u64 │
+╞════════╪═══════════════╪═════╪═════╪═════╪═════╡
+│ 34680  ┆ [binary data] ┆ 4   ┆ 3   ┆ 11  ┆ 1   │
+├╌╌╌╌╌╌╌╌┼╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌┼╌╌╌╌╌┼╌╌╌╌╌┼╌╌╌╌╌┼╌╌╌╌╌┤
+│ 298616 ┆ [binary data] ┆ 1   ┆ 0   ┆ 2   ┆ 0   │
+├╌╌╌╌╌╌╌╌┼╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌┼╌╌╌╌╌┼╌╌╌╌╌┼╌╌╌╌╌┼╌╌╌╌╌┤
+│ 45248  ┆ [binary data] ┆ 3   ┆ 2   ┆ 10  ┆ 1   │
+├╌╌╌╌╌╌╌╌┼╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌┼╌╌╌╌╌┼╌╌╌╌╌┼╌╌╌╌╌┼╌╌╌╌╌┤
+│ 297168 ┆ [binary data] ┆ 1   ┆ 0   ┆ 2   ┆ 0   │
+├╌╌╌╌╌╌╌╌┼╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌┼╌╌╌╌╌┼╌╌╌╌╌┼╌╌╌╌╌┼╌╌╌╌╌┤
+│ 294432 ┆ [binary data] ┆ 1   ┆ 0   ┆ 5   ┆ 0   │
+└────────┴───────────────┴─────┴─────┴─────┴─────┘
+
+&gt;&gt;&gt; c.head(5).with_column(g.modularity())
+shape: (5, 7)
+┌────────┬───────────────┬─────┬─────┬─────┬─────┬─────────────┐
+│ label  ┆ nodes         ┆ n   ┆ m   ┆ c   ┆ mcd ┆ modularity  │
+│ ---    ┆ ---           ┆ --- ┆ --- ┆ --- ┆ --- ┆ ---         │
+│ i64    ┆ binary        ┆ u64 ┆ u64 ┆ u64 ┆ u64 ┆ f64         │
+╞════════╪═══════════════╪═════╪═════╪═════╪═════╪═════════════╡
+│ 34680  ┆ [binary data] ┆ 4   ┆ 3   ┆ 11  ┆ 1   ┆ 0.000003    │
+├╌╌╌╌╌╌╌╌┼╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌┼╌╌╌╌╌┼╌╌╌╌╌┼╌╌╌╌╌┼╌╌╌╌╌┼╌╌╌╌╌╌╌╌╌╌╌╌╌┤
+│ 298616 ┆ [binary data] ┆ 1   ┆ 0   ┆ 2   ┆ 0   ┆ -1.1665e-12 │
+├╌╌╌╌╌╌╌╌┼╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌┼╌╌╌╌╌┼╌╌╌╌╌┼╌╌╌╌╌┼╌╌╌╌╌┼╌╌╌╌╌╌╌╌╌╌╌╌╌┤
+│ 45248  ┆ [binary data] ┆ 3   ┆ 2   ┆ 10  ┆ 1   ┆ 0.000002    │
+├╌╌╌╌╌╌╌╌┼╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌┼╌╌╌╌╌┼╌╌╌╌╌┼╌╌╌╌╌┼╌╌╌╌╌┼╌╌╌╌╌╌╌╌╌╌╌╌╌┤
+│ 297168 ┆ [binary data] ┆ 1   ┆ 0   ┆ 2   ┆ 0   ┆ -1.1665e-12 │
+├╌╌╌╌╌╌╌╌┼╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌┼╌╌╌╌╌┼╌╌╌╌╌┼╌╌╌╌╌┼╌╌╌╌╌┼╌╌╌╌╌╌╌╌╌╌╌╌╌┤
+│ 294432 ┆ [binary data] ┆ 1   ┆ 0   ┆ 5   ┆ 0   ┆ -7.2908e-12 │
+└────────┴───────────────┴─────┴─────┴─────┴─────┴─────────────┘
+</code></pre>
+<h2 id="gconductance"><a class="header" href="#gconductance"><code>g.conductance()</code></a></h2>
+<p>Intra-cluster conductance, defined somewhat as:</p>
+<pre><code class="language-python">def vol1(self):
+    complement = 2 * self.m - vol
+    return when(vol &gt; complement).then(complement).otherwise(vol).alias(&quot;vol1&quot;)
+
+
+def conductance(self):
+    return (
+        when(col(&quot;n&quot;) &gt; 1)
+        .then((col(&quot;c&quot;) / self.vol1()))
+        .otherwise(None)
+        .alias(&quot;conductance&quot;)
+    )
+</code></pre>
+<h2 id="gcpmr"><a class="header" href="#gcpmr"><code>g.cpm(r)</code></a></h2>
+<p>Constant Potts model with resolution value <code>r</code>.</p>
+<div style="break-before: page; page-break-before: always;"></div><h1 id="graph-analytics"><a class="header" href="#graph-analytics">Graph Analytics</a></h1>
+<p>Belinda is not designed to be the full-fledged solution
+to undirected graph analytics. Here we show the limited features provided.</p>
+<p>Assume that <code>g</code> is a <code>bl.Graph</code>.</p>
+<h2 id="gsummary"><a class="header" href="#gsummary"><code>g.summary()</code></a></h2>
+<p>Convenience method producing a dataframe of some summary statistics.</p>
+<pre><code class="language-python">&gt;&gt;&gt; g.summary()
+shape: (1, 4)
+┌────────┬────────┬────────────────┬───────────────────┐
+│ n      ┆ m      ┆ num_components ┆ largest_component │
+│ ---    ┆ ---    ┆ ---            ┆ ---               │
+│ u32    ┆ u64    ┆ u32            ┆ u32               │
+╞════════╪════════╪════════════════╪═══════════════════╡
+│ 334863 ┆ 925872 ┆ 1              ┆ 334863            │
+└────────┴────────┴────────────────┴───────────────────┘
+</code></pre>
+<h2 id="gnodesclusteringnone-verbosefalse"><a class="header" href="#gnodesclusteringnone-verbosefalse"><code>g.nodes(clustering=None, verbose=False)</code></a></h2>
+<blockquote>
+<p>This feature is experimental, and the API may change.</p>
+</blockquote>
+<p>A table of nodes, depending on the arguments can achieve various things:</p>
+<pre><code>&gt;&gt;&gt; g.nodes() # a table of nodes with degrees
+shape: (334863, 2)
+┌────────┬────────┐
+│ node   ┆ degree │
+│ ---    ┆ ---    │
+│ u32    ┆ u32    │
+╞════════╪════════╡
+│ 1      ┆ 8      │
+├╌╌╌╌╌╌╌╌┼╌╌╌╌╌╌╌╌┤
+│ 88160  ┆ 7      │
+├╌╌╌╌╌╌╌╌┼╌╌╌╌╌╌╌╌┤
+│ 118052 ┆ 18     │
+├╌╌╌╌╌╌╌╌┼╌╌╌╌╌╌╌╌┤
+│ 161555 ┆ 31     │
+├╌╌╌╌╌╌╌╌┼╌╌╌╌╌╌╌╌┤
+│ ...    ┆ ...    │
+</code></pre>
+<p>Setting <code>verbose=True</code> will also print out the adjacency list:</p>
+<pre><code>&gt;&gt;&gt; g.nodes(verbose=True)
+shape: (334863, 3)
+┌────────┬────────┬─────────────────────────────┐
+│ node   ┆ degree ┆ adj                         │
+│ ---    ┆ ---    ┆ ---                         │
+│ u32    ┆ u32    ┆ list[u32]                   │
+╞════════╪════════╪═════════════════════════════╡
+│ 1      ┆ 8      ┆ [88160, 118052, ... 500600] │
+├╌╌╌╌╌╌╌╌┼╌╌╌╌╌╌╌╌┼╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌┤
+│ 88160  ┆ 7      ┆ [1, 161555, ... 102091]     │
+├╌╌╌╌╌╌╌╌┼╌╌╌╌╌╌╌╌┼╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌┤
+│ 118052 ┆ 18     ┆ [1, 161555, ... 479787]     │
+├╌╌╌╌╌╌╌╌┼╌╌╌╌╌╌╌╌┼╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌┤
+│ 161555 ┆ 31     ┆ [1, 88160, ... 470778]      │
+├╌╌╌╌╌╌╌╌┼╌╌╌╌╌╌╌╌┼╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌┤
+│ ...    ┆ ...    ┆ ...                         │
+├╌╌╌╌╌╌╌╌┼╌╌╌╌╌╌╌╌┼╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌┤
+│ 548085 ┆ 1      ┆ [548091]                    │
+</code></pre>
+<p>Given a clustering, the final result includes the labels for each node.
+This is an unstable API, and to support overlapping clusters
+each node can be assigned to multiple clusters.</p>
+<pre><code>&gt;&gt;&gt; g.nodes(c)
+shape: (334863, 3)
+┌────────┬────────┬───────────┐
+│ node   ┆ degree ┆ labels    │
+│ ---    ┆ ---    ┆ ---       │
+│ u32    ┆ u32    ┆ list[u32] │
+╞════════╪════════╪═══════════╡
+│ 1      ┆ 8      ┆ [18951]   │
+├╌╌╌╌╌╌╌╌┼╌╌╌╌╌╌╌╌┼╌╌╌╌╌╌╌╌╌╌╌┤
+│ 88160  ┆ 7      ┆ [18951]   │
+├╌╌╌╌╌╌╌╌┼╌╌╌╌╌╌╌╌┼╌╌╌╌╌╌╌╌╌╌╌┤
+│ 118052 ┆ 18     ┆ [35215]   │
+├╌╌╌╌╌╌╌╌┼╌╌╌╌╌╌╌╌┼╌╌╌╌╌╌╌╌╌╌╌┤
+│ 161555 ┆ 31     ┆ [18951]   │
+├╌╌╌╌╌╌╌╌┼╌╌╌╌╌╌╌╌┼╌╌╌╌╌╌╌╌╌╌╌┤
+│ ...    ┆ ...    ┆ ...       │
+├╌╌╌╌╌╌╌╌┼╌╌╌╌╌╌╌╌┼╌╌╌╌╌╌╌╌╌╌╌┤
+│ 548085 ┆ 1      ┆ [295065]  │
+├╌╌╌╌╌╌╌╌┼╌╌╌╌╌╌╌╌┼╌╌╌╌╌╌╌╌╌╌╌┤
+</code></pre>
+<div style="break-before: page; page-break-before: always;"></div><h1 id="cookbook"><a class="header" href="#cookbook">Cookbook</a></h1>
+<div style="break-before: page; page-break-before: always;"></div><h1 id="conversion-to-parquet"><a class="header" href="#conversion-to-parquet">Conversion to Parquet</a></h1>
+<p>Since Polars data frames are Apache Arrow based, conversion to Parquet is quite easy and lossless, useful for storage.</p>
+<pre><code class="language-python">import belinda as bl
+import polars as pl
+
+g = bl.Graph(&quot;com-amazon.ungraph.txt&quot;)
+c = bl.read_membership(g, &quot;com-amazon.leiden.txt&quot;)
+
+c.write_parquet(&quot;com-amazon.leiden.parquet&quot;)
+</code></pre>
+<div style="break-before: page; page-break-before: always;"></div><h1 id="filtering-out-clusters"><a class="header" href="#filtering-out-clusters">Filtering out Clusters</a></h1>
+<pre><code class="language-python">import belinda as bl
+import polars as pl
+
+# the edgelist graph
+g = bl.Graph(&quot;com-amazon.ungraph.txt&quot;)
+# the membership as given by Leiden
+c = bl.read_membership(g, &quot;com-amazon.leiden.txt&quot;)
+c_wo_trees = c.filter(pl.col('n') != pl.col('m') + 1)
+# `c_wo_trees` is a new set of clusters without &quot;trees&quot;, clusters with n = m + 1
+
+# write the new membership
+bl.write_membership(g, c_wo_trees, &quot;com-amazon.leiden.wotrees.txt&quot;)
+
+c_largish = c.filter(pl.col('n') &gt; 10) # only take clusters with more than 10 nodes
+bl.write_membership(g, c_largish, &quot;com-amazon.leiden.largish.txt&quot;)
+</code></pre>
+<p>Now let’s check that these files indeed do exist:</p>
+<pre><code class="language-python">&gt;&gt;!wc -l com-amazon.leiden.wotrees.txt
+  230845 c_wo_trees.leiden.tsv
+</code></pre>
+<div style="break-before: page; page-break-before: always;"></div><h1 id="basic-eda"><a class="header" href="#basic-eda">Basic EDA</a></h1>
+<p>Let’s first load everything:</p>
+<pre><code class="language-python">&gt;&gt;&gt; import polars as pl
+&gt;&gt;&gt; import belinda as bl
+&gt;&gt;&gt; g = bl.Graph(&quot;com-amazon.ungraph.txt&quot;)
+&gt;&gt;&gt; g.summary()
+shape: (1, 4)
+┌────────┬────────┬────────────────┬───────────────────┐
+│ n      ┆ m      ┆ num_components ┆ largest_component │
+│ ---    ┆ ---    ┆ ---            ┆ ---               │
+│ u32    ┆ u64    ┆ u32            ┆ u32               │
+╞════════╪════════╪════════════════╪═══════════════════╡
+│ 334863 ┆ 925872 ┆ 1              ┆ 334863            │
+└────────┴────────┴────────────────┴───────────────────┘
+
+&gt;&gt;&gt; g.nodes() # a table of all nodes
+shape: (334863, 2)
+┌────────┬────────┐
+│ node   ┆ degree │
+│ ---    ┆ ---    │
+│ u32    ┆ u32    │
+╞════════╪════════╡
+│ 1      ┆ 8      │
+├╌╌╌╌╌╌╌╌┼╌╌╌╌╌╌╌╌┤
+│ 88160  ┆ 7      │
+├╌╌╌╌╌╌╌╌┼╌╌╌╌╌╌╌╌┤
+│ 118052 ┆ 18     │
+├╌╌╌╌╌╌╌╌┼╌╌╌╌╌╌╌╌┤
+│ 161555 ┆ 31     │
+├╌╌╌╌╌╌╌╌┼╌╌╌╌╌╌╌╌┤
+│ ...    ┆ ...    │
+├╌╌╌╌╌╌╌╌┼╌╌╌╌╌╌╌╌┤
+</code></pre>
+<h2 id="loading-the-leidenr02-clustering"><a class="header" href="#loading-the-leidenr02-clustering">Loading the Leiden(r=0.2) clustering</a></h2>
+<p>(These data were obtained from the <a href="./quick_start.html">Quick Start</a> page)</p>
+<pre><code class="language-python">&gt;&gt;&gt; c = bl.read_membership(g, &quot;com-amazon.leiden.txt&quot;).sort(pl.col('n'), reverse=True)
+&gt;&gt;&gt; c
+shape: (85036, 6)
+┌────────┬───────────────┬─────┬─────┬─────┬─────┐
+│ label  ┆ nodes         ┆ n   ┆ m   ┆ c   ┆ mcd │
+│ ---    ┆ ---           ┆ --- ┆ --- ┆ --- ┆ --- │
+│ i64    ┆ binary        ┆ u64 ┆ u64 ┆ u64 ┆ u64 │
+╞════════╪═══════════════╪═════╪═════╪═════╪═════╡
+│ 0      ┆ [binary data] ┆ 26  ┆ 115 ┆ 128 ┆ 5   │
+├╌╌╌╌╌╌╌╌┼╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌┼╌╌╌╌╌┼╌╌╌╌╌┼╌╌╌╌╌┼╌╌╌╌╌┤
+│ 8      ┆ [binary data] ┆ 25  ┆ 110 ┆ 537 ┆ 5   │
+├╌╌╌╌╌╌╌╌┼╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌┼╌╌╌╌╌┼╌╌╌╌╌┼╌╌╌╌╌┼╌╌╌╌╌┤
+│ 7      ┆ [binary data] ┆ 25  ┆ 106 ┆ 83  ┆ 5   │
+├╌╌╌╌╌╌╌╌┼╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌┼╌╌╌╌╌┼╌╌╌╌╌┼╌╌╌╌╌┼╌╌╌╌╌┤
+│ 6      ┆ [binary data] ┆ 25  ┆ 107 ┆ 85  ┆ 5   │
+├╌╌╌╌╌╌╌╌┼╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌┼╌╌╌╌╌┼╌╌╌╌╌┼╌╌╌╌╌┼╌╌╌╌╌┤
+│ ...    ┆ ...           ┆ ... ┆ ... ┆ ... ┆ ... │
+├╌╌╌╌╌╌╌╌┼╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌┼╌╌╌╌╌┼╌╌╌╌╌┼╌╌╌╌╌┼╌╌╌╌╌┤
+</code></pre>
+<p>Let’s further filter out singletons:</p>
+<pre><code class="language-python">&gt;&gt;&gt; c = c.filter(pl.col('n') &gt; 1)
+&gt;&gt;&gt; c
+shape: (60609, 6)
+┌───────┬───────────────┬─────┬─────┬─────┬─────┐
+│ label ┆ nodes         ┆ n   ┆ m   ┆ c   ┆ mcd │
+│ ---   ┆ ---           ┆ --- ┆ --- ┆ --- ┆ --- │
+│ i64   ┆ binary        ┆ u64 ┆ u64 ┆ u64 ┆ u64 │
+╞═══════╪═══════════════╪═════╪═════╪═════╪═════╡
+│ 0     ┆ [binary data] ┆ 26  ┆ 115 ┆ 128 ┆ 5   │
+├╌╌╌╌╌╌╌┼╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌┼╌╌╌╌╌┼╌╌╌╌╌┼╌╌╌╌╌┼╌╌╌╌╌┤
+│ 8     ┆ [binary data] ┆ 25  ┆ 110 ┆ 537 ┆ 5   │
+├╌╌╌╌╌╌╌┼╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌┼╌╌╌╌╌┼╌╌╌╌╌┼╌╌╌╌╌┼╌╌╌╌╌┤
+│ 7     ┆ [binary data] ┆ 25  ┆ 106 ┆ 83  ┆ 5   │
+├╌╌╌╌╌╌╌┼╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌┼╌╌╌╌╌┼╌╌╌╌╌┼╌╌╌╌╌┼╌╌╌╌╌┤
+│ 6     ┆ [binary data] ┆ 25  ┆ 107 ┆ 85  ┆ 5   │
+├╌╌╌╌╌╌╌┼╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌┼╌╌╌╌╌┼╌╌╌╌╌┼╌╌╌╌╌┼╌╌╌╌╌┤
+│ ...   ┆ ...           ┆ ... ┆ ... ┆ ... ┆ ... │
+</code></pre>
+<p>Now, without singletons, what is the coverage? Belinda provides the <code>peek</code>
+function to quickly get an overview of the clustering:</p>
+<pre><code class="language-python">&gt;&gt;&gt; bl.peek(g, c)
+shape: (1, 4)
+┌────────────┬───────────────┬───────────────┬──────────────────┐
+│ n_clusters ┆ node_coverage ┆ edge_coverage ┆ n                │
+│ ---        ┆ ---           ┆ ---           ┆ ---              │
+│ u32        ┆ f64           ┆ f64           ┆ list[f64]        │
+╞════════════╪═══════════════╪═══════════════╪══════════════════╡
+│ 60609      ┆ 0.927054      ┆ 0.5739        ┆ [2.0, 4.0, 26.0] │
+└────────────┴───────────────┴───────────────┴──────────────────┘
+# the list[f64] is the distribution of cluster sizes (n)
+# given in mininum, median, and maximum
+</code></pre>
+<p>Let’s just say that we are interested in the average degree inside each cluster,
+and would also like to know the distribution of the average degree:</p>
+<p>Notice that mathematically average degree is \(2 m / n\). The rest is easy:</p>
+<pre><code class="language-python">&gt;&gt;&gt; bl.peek(g, c, statistics=[(pl.col('m') * 2 / pl.col('n')).alias(&quot;avg_degree&quot;)])
+shape: (1, 4)
+┌────────────┬───────────────┬───────────────┬──────────────────┐
+│ n_clusters ┆ node_coverage ┆ edge_coverage ┆ avg_degree       │
+│ ---        ┆ ---           ┆ ---           ┆ ---              │
+│ u32        ┆ f64           ┆ f64           ┆ list[f64]        │
+╞════════════╪═══════════════╪═══════════════╪══════════════════╡
+│ 60609      ┆ 0.927054      ┆ 0.5739        ┆ [1.0, 2.0, 8.88] │
+└────────────┴───────────────┴───────────────┴──────────────────┘
+</code></pre>
+<p>Notice that <code>peek</code> accepts a named argument called <code>statistics</code>, which accepts
+a list of Polars expressions, that it will automatically broadcast to each cluster
+and calculate the statistics for. Let’s try something more extravagant.</p>
+<pre><code class="language-python">&gt;&gt;&gt; avg_degree = (pl.col('m') * 2 / pl.col('n')).alias(&quot;avg_degree&quot;)
+&gt;&gt;&gt; choose2 = lambda x: x * (x - 1) / 2 # \binom{x}{2}
+&gt;&gt;&gt; edge_density = (pl.col('m')/choose2(pl.col('n'))).alias(&quot;edge_density&quot;)
+&gt;&gt;&gt; cpm = lambda r: (pl.col('m') - choose2(pl.col('n')) * r).alias(&quot;cpm&quot;)
+&gt;&gt;&gt; bl.peek(g, c, statistics=[avg_degree, edge_density, cpm(0.2)])
+shape: (1, 6)
+┌────────────┬───────────────┬───────────────┬──────────────────┬───────────────────────────┬──────────────────┐
+│ n_clusters ┆ node_coverage ┆ edge_coverage ┆ avg_degree       ┆ edge_density              ┆ cpm              │
+│ ---        ┆ ---           ┆ ---           ┆ ---              ┆ ---                       ┆ ---              │
+│ u32        ┆ f64           ┆ f64           ┆ list[f64]        ┆ list[f64]                 ┆ list[f64]        │
+╞════════════╪═══════════════╪═══════════════╪══════════════════╪═══════════════════════════╪══════════════════╡
+│ 60609      ┆ 0.927054      ┆ 0.5739        ┆ [1.0, 2.0, 8.88] ┆ [0.304762, 0.666667, 1.0] ┆ [0.8, 2.8, 51.0] │
+└────────────┴───────────────┴───────────────┴──────────────────┴───────────────────────────┴──────────────────┘
+</code></pre>
+<p>The theme here is <em>composable</em>: it is easy to define custom statistics, and
+it is easy to cherry-pick the statistics that you actually want.</p>
+<p>Let’s take it further: what about statistics on clusters only of at least size 5?</p>
+<pre><code class="language-python">&gt;&gt;&gt; bl.peek(g, c.filter(pl.col('n') &gt;= 5))
+shape: (1, 4)
+┌────────────┬───────────────┬───────────────┬──────────────────┐
+│ n_clusters ┆ node_coverage ┆ edge_coverage ┆ n                │
+│ ---        ┆ ---           ┆ ---           ┆ ---              │
+│ u32        ┆ f64           ┆ f64           ┆ list[f64]        │
+╞════════════╪═══════════════╪═══════════════╪══════════════════╡
+│ 28512      ┆ 0.642454      ┆ 0.494698      ┆ [5.0, 6.0, 26.0] │
+└────────────┴───────────────┴───────────────┴──────────────────┘
+</code></pre>
+<p>What about statistics on the top 10 clusters by size?</p>
+<pre><code class="language-python">&gt;&gt;&gt; bl.peek(g, c.sort(pl.col('n'), reverse=True).head(10))
+shape: (1, 4)
+┌────────────┬───────────────┬───────────────┬────────────────────┐
+│ n_clusters ┆ node_coverage ┆ edge_coverage ┆ n                  │
+│ ---        ┆ ---           ┆ ---           ┆ ---                │
+│ u32        ┆ f64           ┆ f64           ┆ list[f64]          │
+╞════════════╪═══════════════╪═══════════════╪════════════════════╡
+│ 10         ┆ 0.00075       ┆ 0.001163      ┆ [25.0, 25.0, 26.0] │
+└────────────┴───────────────┴───────────────┴────────────────────┘
+</code></pre>
+<h2 id="behind-the-scenes"><a class="header" href="#behind-the-scenes">Behind the scenes</a></h2>
+<p>The <code>peek</code> implementation is relatively magic-free:</p>
+<pre><code class="language-python">def peek(graph, clustering, overlap=False, statistics=[pl.col('n')]):
+    return clustering.select(
+        [
+            pl.col('nodes').count().alias('n_clusters'),
+            graph.node_coverage(overlap),
+            graph.edge_coverage(overlap),
+            *[
+                pl.concat_list([s.quantile(0), s.quantile(0.5), s.quantile(1)])
+                for s in statistics
+            ],
+        ]
+    )
+</code></pre>
+<div style="break-before: page; page-break-before: always;"></div><h1 id="acknowledgements"><a class="header" href="#acknowledgements">Acknowledgements</a></h1>
+<blockquote>
+<p><strong>Belinda</strong>: People are all we’ve got. [...] No longer a slave, no longer a machine with parts. You’re just a person. In business.</p>
+</blockquote>
+<p>Belinda was influenced by and has borrowed code from the following libraries</p>
+<ul>
+<li><a href="https://github.com/geopolars/geopolars">GeoPolars</a>, MIT licensed</li>
+<li><a href="https://github.com/pola-rs/polars">Polars</a>, MIT licensed</li>
+</ul>
+<h2 id="license-texts-of-the-software-used"><a class="header" href="#license-texts-of-the-software-used">LICENSE texts of the software used</a></h2>
+<p>The license texts of the MIT-licensed software used:</p>
+<h3 id="polars"><a class="header" href="#polars">Polars</a></h3>
+<pre><code>Copyright (c) 2020 Ritchie Vink
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the &quot;Software&quot;), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED &quot;AS IS&quot;, WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
+</code></pre>
+<h3 id="geopolars"><a class="header" href="#geopolars">GeoPolars</a></h3>
+<pre><code>MIT License
+
+Copyright (c) 2022 Kyle Barron
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the &quot;Software&quot;), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED &quot;AS IS&quot;, WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
+</code></pre>
+
+                    </main>
+
+                    <nav class="nav-wrapper" aria-label="Page navigation">
+                        <!-- Mobile navigation buttons -->
+                        
+                        
+                        <div style="clear: both"></div>
+                    </nav>
+                </div>
+            </div>
+
+            <nav class="nav-wide-wrapper" aria-label="Page navigation">
+                
+                            </nav>
+
+        </div>
+
+        
+        
+        
+                <script type="text/javascript">
+            window.playground_copyable = true;
+        </script>
+        
+        
+                <script src="elasticlunr.min.js" type="text/javascript" charset="utf-8"></script>
+        <script src="mark.min.js" type="text/javascript" charset="utf-8"></script>
+        <script src="searcher.js" type="text/javascript" charset="utf-8"></script>
+        
+        <script src="clipboard.min.js" type="text/javascript" charset="utf-8"></script>
+        <script src="highlight.js" type="text/javascript" charset="utf-8"></script>
+        <script src="book.js" type="text/javascript" charset="utf-8"></script>
+
+        <!-- Custom JS scripts -->
+        
+                        <script type="text/javascript">
+        window.addEventListener('load', function() {
+            MathJax.Hub.Register.StartupHook('End', function() {
+                window.setTimeout(window.print, 100);
+            });
+        });
+        </script>
+                
+    </body>
+</html>
