@@ -1,6 +1,6 @@
 # Acknowledgements
 
-> **Belinda**: There is nothing more exciting than a room full of people [...] Look at me. Listen, people are all we've got. People are all we've got.
+> **Belinda**: I miss walking into a room and not knowing… There’s a sort of energy. A dare. Do not take that for granted. There is nothing more exciting than a room full of people. [...] Look at me. Listen, people are all we've got. People are all we've got.
 
 Belinda was influenced by and has borrowed code from the following libraries
 
