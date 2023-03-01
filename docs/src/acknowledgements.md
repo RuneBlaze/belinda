@@ -1,6 +1,6 @@
 # Acknowledgements
 
-> **Belinda**: People are all we’ve got. [...] No longer a slave, no longer a machine with parts. You’re just a person. In business.
+> **Belinda**: There is nothing more exciting than a room full of people [...] Look at me. Listen, people are all we've got. People are all we've got.
 
 Belinda was influenced by and has borrowed code from the following libraries
 
